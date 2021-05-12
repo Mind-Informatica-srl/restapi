@@ -8,6 +8,22 @@ import (
 
 type DBUpdateAction DatabaseAction
 
+func (action *DBUpdateAction) IsSkipAuth() bool {
+	return action.SkipAuth
+}
+
+func (action *DBUpdateAction) GetPath() string {
+	return action.Path
+}
+
+func (action *DBUpdateAction) GetMethod() string {
+	return action.Method
+}
+
+func (action *DBUpdateAction) GetAuthorizations() []string {
+	return action.Authorizations
+}
+
 func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	db := action.DBProvider()
 	id, err := action.PKExtractor(r)

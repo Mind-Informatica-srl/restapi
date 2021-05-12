@@ -7,6 +7,22 @@ import (
 
 type DBGetOneAction DatabaseAction
 
+func (action *DBGetOneAction) IsSkipAuth() bool {
+	return action.SkipAuth
+}
+
+func (action *DBGetOneAction) GetPath() string {
+	return action.Path
+}
+
+func (action *DBGetOneAction) GetMethod() string {
+	return action.Method
+}
+
+func (action *DBGetOneAction) GetAuthorizations() []string {
+	return action.Authorizations
+}
+
 func (action *DBGetOneAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	db := action.DBProvider()
 	id, err := action.PKExtractor(r)

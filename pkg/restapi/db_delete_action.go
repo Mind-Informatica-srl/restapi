@@ -6,6 +6,22 @@ import (
 
 type DBDeleteAction DatabaseAction
 
+func (action *DBDeleteAction) IsSkipAuth() bool {
+	return action.SkipAuth
+}
+
+func (action *DBDeleteAction) GetPath() string {
+	return action.Path
+}
+
+func (action *DBDeleteAction) GetMethod() string {
+	return action.Method
+}
+
+func (action *DBDeleteAction) GetAuthorizations() []string {
+	return action.Authorizations
+}
+
 func (action *DBDeleteAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	db := action.DBProvider()
 	id, err := action.PKExtractor(r)
