@@ -9,8 +9,8 @@ import (
 )
 
 type Pager struct {
-	TotalCount int64
-	Items      func() interface{}
+	TotalCount int64              `json:"totalCount"`
+	Items      func() interface{} `json:"items"`
 }
 
 func (p Pager) MarshalJSON() ([]byte, error) {
