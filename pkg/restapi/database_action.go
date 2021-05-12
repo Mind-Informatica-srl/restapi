@@ -3,7 +3,9 @@ package restapi
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 )
 
@@ -51,4 +53,28 @@ type DatabaseAction struct {
 	PKExtractor    ExtractPKFunc
 	PKVerificator  VerifyPKFunc
 	PKAssigner     AssignPKFunc
+}
+
+// PrimaryKeyIntExtractor permette di recuperare l'id dalla request
+// oltre alla request si passa il nome del parametro che identifica l'id
+func PrimaryKeyIntExtractor(r *http.Request, idName string) (int, error) {
+	vars := mux.Vars(r)
+	pk, err := strconv.Atoi(vars[idName])
+	if err != nil {
+		return 0, err
+	}
+	return pk, nil
+}
+
+var ErrorMissingIdName = fmt.Errorf("missing id name")
+
+// PrimaryKeyIntExtractor permette di recuperare l'id dalla request
+// oltre alla request si passa il nome del parametro che identifica l'id
+func PrimaryKeyStringExtractor(r *http.Request, idName string) (string, error) {
+	vars := mux.Vars(r)
+	pk := vars[idName]
+	if pk == "" {
+		return "", ErrorMissingIdName
+	}
+	return pk, nil
 }
