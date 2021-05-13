@@ -1,7 +1,11 @@
 package actions
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type ActionFunc func(w http.ResponseWriter, r *http.Request) *ActionError
@@ -63,4 +67,26 @@ func (e ActionError) Error() string {
 
 func (e ActionError) Unwrap() error {
 	return e.Err
+}
+
+// PrimaryKeyIntExtractor extract the int pk from the request's vars
+func PrimaryKeyIntExtractor(r *http.Request, idName string) (int, error) {
+	vars := mux.Vars(r)
+	pk, err := strconv.Atoi(vars[idName])
+	if err != nil {
+		return 0, err
+	}
+	return pk, nil
+}
+
+var ErrorMissingIdName = fmt.Errorf("missing id name")
+
+// PrimaryKeyIntExtractor extract the string pkj from the request's vars
+func PrimaryKeyStringExtractor(r *http.Request, idName string) (string, error) {
+	vars := mux.Vars(r)
+	pk := vars[idName]
+	if pk == "" {
+		return "", ErrorMissingIdName
+	}
+	return pk, nil
 }
