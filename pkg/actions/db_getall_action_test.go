@@ -1,28 +1,26 @@
-package restapi
+package actions
 
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Mind-Informatica-srl/restapi/internal/testutils"
-	"gorm.io/gorm"
 )
 
-func TestDBIGetAllAction(t *testing.T) {
-	content, err := ioutil.ReadFile("testdata/simple_object.json")
+func TestDBGetAllAction(t *testing.T) {
+	content, err := testutils.SomeSimpleObject()
 	if err != nil {
 		panic(err)
 	}
 
 	request := httptest.NewRequest("GET", "/getall", bytes.NewReader(content))
 	responseWriter := httptest.NewRecorder()
-
-	connectionPool, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectDelegate
+	mock := testutils.SetupTestForGorm(&delegate)
 
 	rows := sqlmock.NewRows([]string{"nome", "cognome"}).
 		AddRow("mario", "rossi").AddRow("paolo", "bianchi")
@@ -30,12 +28,7 @@ func TestDBIGetAllAction(t *testing.T) {
 	mock.ExpectQuery(query).WillReturnRows(rows)
 
 	action := DBGetAllAction{
-		ObjectCreator: func() interface{} {
-			return &[]SimpleObject{}
-		},
-		DBProvider: func() *gorm.DB {
-			return connectionPool
-		},
+		Delegate: delegate,
 	}
 
 	action.ServeHTTP(responseWriter, request)
@@ -59,7 +52,7 @@ func TestDBIGetAllAction(t *testing.T) {
 }
 
 func TestDBIGetAllActionWithQueryParams(t *testing.T) {
-	content, err := ioutil.ReadFile("testdata/simple_object.json")
+	content, err := testutils.SomeSimpleObject()
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +60,8 @@ func TestDBIGetAllActionWithQueryParams(t *testing.T) {
 	request := httptest.NewRequest("GET", "/getall?q=nome.equal=mario", bytes.NewReader(content))
 	responseWriter := httptest.NewRecorder()
 
-	connectionPool, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectDelegate
+	mock := testutils.SetupTestForGorm(&delegate)
 
 	rows := sqlmock.NewRows([]string{"nome", "cognome"}).
 		AddRow("mario", "rossi")
@@ -75,12 +69,7 @@ func TestDBIGetAllActionWithQueryParams(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs("lower('mario')").WillReturnRows(rows)
 
 	action := DBGetAllAction{
-		ObjectCreator: func() interface{} {
-			return &[]SimpleObject{}
-		},
-		DBProvider: func() *gorm.DB {
-			return connectionPool
-		},
+		Delegate: delegate,
 	}
 
 	action.ServeHTTP(responseWriter, request)

@@ -1,4 +1,4 @@
-package restapi
+package actions
 
 import (
 	"encoding/json"

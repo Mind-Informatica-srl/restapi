@@ -1,4 +1,4 @@
-package restapi
+package actions
 
 import (
 	"encoding/json"
@@ -24,13 +24,13 @@ func (action *DBGetOneAction) GetAuthorizations() []string {
 }
 
 func (action *DBGetOneAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	db := action.DBProvider()
-	id, err := action.PKExtractor(r)
+	db := action.Delegate.DBProvider()
+	id, err := action.Delegate.PKExtractor(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	element := action.ObjectCreator()
+	element := action.Delegate.ObjectCreator()
 	if err := db.First(element, id).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

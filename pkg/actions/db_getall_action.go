@@ -1,4 +1,4 @@
-package restapi
+package actions
 
 import (
 	"encoding/json"
@@ -27,13 +27,13 @@ func (action *DBGetAllAction) GetAuthorizations() []string {
 }
 
 func (action *DBGetAllAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	db := action.DBProvider()
+	db := action.Delegate.DBProvider()
 	db, err := QueryFilter(db, r.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	list := action.ObjectCreator()
+	list := action.Delegate.ListCreator()
 	paginationScope, page, pageSize := Paginate(r)
 	var count int64
 	//se è richiesta la paginazione
@@ -43,7 +43,7 @@ func (action *DBGetAllAction) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 	if page > 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
-		element := action.ObjectCreator()
+		element := action.Delegate.ObjectCreator()
 		if err = db.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

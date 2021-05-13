@@ -1,4 +1,4 @@
-package restapi
+package actions
 
 type Controller struct {
 	Path    string

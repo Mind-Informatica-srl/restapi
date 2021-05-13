@@ -1,4 +1,4 @@
-package restapi
+package actions
 
 import (
 	"encoding/json"
@@ -25,13 +25,13 @@ func (action *DBUpdateAction) GetAuthorizations() []string {
 }
 
 func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	db := action.DBProvider()
-	id, err := action.PKExtractor(r)
+	db := action.Delegate.DBProvider()
+	id, err := action.Delegate.PKExtractor(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	element := action.ObjectCreator()
+	element := action.Delegate.ObjectCreator()
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -41,8 +41,9 @@ func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if err := action.PKVerificator(element, id); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if ok, err := action.Delegate.PKVerificator(element, id); !ok {
+		pke := NewPKNotVerifiedError(element, id, err)
+		http.Error(w, pke.Error(), http.StatusBadRequest)
 		return
 	}
 	if err := db.Save(element).Error; err != nil {

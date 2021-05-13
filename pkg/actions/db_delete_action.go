@@ -1,4 +1,4 @@
-package restapi
+package actions
 
 import (
 	"net/http"
@@ -23,14 +23,14 @@ func (action *DBDeleteAction) GetAuthorizations() []string {
 }
 
 func (action *DBDeleteAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	db := action.DBProvider()
-	id, err := action.PKExtractor(r)
+	db := action.Delegate.DBProvider()
+	id, err := action.Delegate.PKExtractor(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	element := action.ObjectCreator()
-	action.PKAssigner(element, id)
+	element := action.Delegate.ObjectCreator()
+	action.Delegate.PKAssigner(element, id)
 	if err := db.Delete(element).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

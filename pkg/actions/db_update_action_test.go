@@ -1,22 +1,19 @@
-package restapi
+package actions
 
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Mind-Informatica-srl/restapi/internal/testutils"
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 )
 
 func TestDBUpdateAction(t *testing.T) {
-	content, err := ioutil.ReadFile("testdata/simple_object_with_id.json")
+	content, err := testutils.SomeSimpleObjectWithId()
 	if err != nil {
 		panic(err)
 	}
@@ -30,7 +27,8 @@ func TestDBUpdateAction(t *testing.T) {
 
 	request = mux.SetURLVars(request, vars)
 
-	connectionPool, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectWithIdDelegate
+	mock := testutils.SetupTestForGorm(&delegate)
 
 	query := `UPDATE "simple_object_with_ids" SET "nome"=\$1,"cognome"=\$2 WHERE "id" = \$3`
 	mock.ExpectBegin()
@@ -38,29 +36,7 @@ func TestDBUpdateAction(t *testing.T) {
 	mock.ExpectCommit()
 
 	action := DBUpdateAction{
-		ObjectCreator: func() interface{} {
-			return &SimpleObjectWithId{}
-		},
-		DBProvider: func() *gorm.DB {
-			return connectionPool
-		},
-		PKExtractor: func(r *http.Request) (interface{}, error) {
-			vars := mux.Vars(r)
-			if pk, err := strconv.Atoi(vars["id"]); err != nil {
-				return nil, err
-			} else {
-				return pk, nil
-			}
-		},
-		PKVerificator: func(element interface{}, pk interface{}) *PKNotVerifiedError {
-			e := element.(*SimpleObjectWithId)
-			id := pk.(int)
-			if e.ID != id {
-				err := NewPKNotVerifiedError(element, pk)
-				return &err
-			}
-			return nil
-		},
+		Delegate: delegate,
 	}
 
 	action.ServeHTTP(responseWriter, request)

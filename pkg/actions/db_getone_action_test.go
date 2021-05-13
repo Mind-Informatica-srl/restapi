@@ -1,23 +1,15 @@
-package restapi
+package actions
 
 import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Mind-Informatica-srl/restapi/internal/testutils"
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 )
-
-type SimpleObjectWithId struct {
-	ID      int
-	Nome    string
-	Cognome string
-}
 
 func TestDBIGetOneAction(t *testing.T) {
 
@@ -30,8 +22,8 @@ func TestDBIGetOneAction(t *testing.T) {
 	}
 
 	request = mux.SetURLVars(request, vars)
-
-	connectionPool, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectWithIdDelegate
+	mock := testutils.SetupTestForGorm(&delegate)
 
 	rows := sqlmock.NewRows([]string{"id", "nome", "cognome"}).
 		AddRow("1", "mario", "rossi").AddRow("2", "paolo", "bianchi")
@@ -39,20 +31,7 @@ func TestDBIGetOneAction(t *testing.T) {
 	mock.ExpectQuery(query).WithArgs(1).WillReturnRows(rows)
 
 	action := DBGetOneAction{
-		ObjectCreator: func() interface{} {
-			return &SimpleObjectWithId{}
-		},
-		DBProvider: func() *gorm.DB {
-			return connectionPool
-		},
-		PKExtractor: func(r *http.Request) (interface{}, error) {
-			vars := mux.Vars(r)
-			if pk, err := strconv.Atoi(vars["id"]); err != nil {
-				return nil, err
-			} else {
-				return pk, nil
-			}
-		},
+		Delegate: delegate,
 	}
 
 	action.ServeHTTP(responseWriter, request)
