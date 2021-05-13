@@ -3,6 +3,8 @@ package actions
 import (
 	"net/http"
 
+	"github.com/Mind-Informatica-srl/restapi/pkg/actions"
+	"github.com/Mind-Informatica-srl/restapi/pkg/controllers"
 	"github.com/Mind-Informatica-srl/restapi/pkg/logger"
 	"github.com/gorilla/mux"
 )
@@ -35,8 +37,8 @@ func NewRestApiServer(router *mux.Router, basePath string, jwtHandler func(next 
 }
 
 // RegisterAction register an handler to the relative path on the server
-func (s *RestApiServer) RegisterAction(basePath string, action AbstractAction) *mux.Route {
-	var handler http.Handler = action
+func (s *RestApiServer) RegisterAction(basePath string, action actions.AbstractAction) *mux.Route {
+	var handler http.Handler = actionHandler(action)
 	if !action.IsSkipAuth() {
 		handler = s.jwtHandler(s.authHandler(handler, action.GetAuthorizations()))
 	}
@@ -44,7 +46,7 @@ func (s *RestApiServer) RegisterAction(basePath string, action AbstractAction) *
 }
 
 // RegisterController register all the actions in the controller on the server
-func (s *RestApiServer) RegisterController(controller *Controller) []*mux.Route {
+func (s *RestApiServer) RegisterController(controller *controllers.Controller) []*mux.Route {
 	var routes []*mux.Route
 	for _, a := range controller.Actions {
 		routes = append(routes, s.RegisterAction(controller.Path, a))
@@ -76,4 +78,13 @@ func requestCorsMiddleware() mux.MiddlewareFunc {
 			next.ServeHTTP(w, req)
 		})
 	}
+}
+
+func actionHandler(action actions.AbstractAction) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := action.Serve(w, r); err != nil {
+			logger.Log().Error(err, "server error", err.Data)
+			http.Error(w, err.Error(), err.Status)
+		}
+	})
 }

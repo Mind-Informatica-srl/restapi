@@ -23,21 +23,19 @@ func (action *DBGetOneAction) GetAuthorizations() []string {
 	return action.Authorizations
 }
 
-func (action *DBGetOneAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
 	db := action.Delegate.DBProvider()
 	id, err := action.Delegate.PKExtractor(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 	element := action.Delegate.ObjectCreator()
 	if err := db.First(element, id).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 
 	if err := json.NewEncoder(w).Encode(element); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
+	return nil
 }

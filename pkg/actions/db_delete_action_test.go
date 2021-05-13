@@ -38,7 +38,10 @@ func TestDBDeleteAction(t *testing.T) {
 		Delegate: delegate,
 	}
 
-	action.ServeHTTP(responseWriter, request)
+	if err := action.Serve(responseWriter, request); err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Log(err)
 		t.Fail()

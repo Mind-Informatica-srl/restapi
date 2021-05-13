@@ -24,27 +24,26 @@ func (action *DBInsertAction) GetAuthorizations() []string {
 	return action.Authorizations
 }
 
-func (action *DBInsertAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
 	element := action.Delegate.ObjectCreator()
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 
 	if err = json.Unmarshal(reqBody, element); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 
 	db := action.Delegate.DBProvider()
 	if err := db.Create(element).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 
 	w.WriteHeader(http.StatusCreated)
 
 	json.NewEncoder(w).Encode(element)
+
+	return nil
 }

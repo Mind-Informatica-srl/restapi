@@ -26,27 +26,24 @@ func (action *DBGetAllAction) GetAuthorizations() []string {
 	return action.Authorizations
 }
 
-func (action *DBGetAllAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
 	db := action.Delegate.DBProvider()
 	db, err := QueryFilter(db, r.URL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 	list := action.Delegate.ListCreator()
 	paginationScope, page, pageSize := Paginate(r)
 	var count int64
 	//se è richiesta la paginazione
 	if err := db.Scopes(paginationScope).Find(list).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	if page > 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
 		element := action.Delegate.ObjectCreator()
 		if err = db.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
 		res := Pager{
 			TotalCount: count,
@@ -55,11 +52,10 @@ func (action *DBGetAllAction) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 			},
 		}
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
 	} else if err := json.NewEncoder(w).Encode(list); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
+	return nil
 }
