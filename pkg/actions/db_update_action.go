@@ -35,35 +35,33 @@ func (action *DBUpdateAction) GetAuthorizations() []string {
 	return action.Authorizations
 }
 
-func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) {
+func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
+
 	db := action.Delegate.ProvideDB()
 	id, err := action.Delegate.ExtractPK(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 	element := action.Delegate.CreateObject()
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 	if err = json.Unmarshal(reqBody, element); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	if ok, err := action.Delegate.VerifyPK(element, id); !ok {
 		pke := NewPKNotVerifiedError(element, id, err)
-		http.Error(w, pke.Error(), http.StatusBadRequest)
-		return
+		return &ActionError{Err: pke, Status: http.StatusBadRequest}
 	}
 	if err := db.Save(element).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(element)
+
+	return nil
 }
 
 // DBDeleteDelegate expose the functions needed by a DBDeleteAction
