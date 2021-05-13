@@ -1,6 +1,7 @@
 package restapi
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -8,19 +9,19 @@ import (
 )
 
 type Pager struct {
-	TotalCount int64              `json:"totalCount"`
-	Items      func() interface{} `json:"items"`
+	TotalCount int64
+	Items      func() interface{}
 }
 
-// func (p Pager) MarshalJSON() ([]byte, error) {
-// 	return json.Marshal(struct {
-// 		TotalCount int64
-// 		Items      interface{}
-// 	}{
-// 		TotalCount: p.TotalCount,
-// 		Items:      p.Items(),
-// 	})
-// }
+func (p Pager) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		TotalCount int64       `json:"totalCount"`
+		Items      interface{} `json:"items"`
+	}{
+		TotalCount: p.TotalCount,
+		Items:      p.Items(),
+	})
+}
 
 func Paginate(r *http.Request) (paginateScope func(db *gorm.DB) *gorm.DB, page int, pageSize int) {
 	var pageString, pageSizeString string
