@@ -2,9 +2,17 @@ package actions
 
 import (
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-type DBDeleteAction DatabaseAction
+type DBDeleteAction struct {
+	Path           string
+	Method         string
+	SkipAuth       bool
+	Authorizations []string
+	Delegate       DBDeleteDelegate
+}
 
 func (action *DBDeleteAction) IsSkipAuth() bool {
 	return action.SkipAuth
@@ -23,16 +31,34 @@ func (action *DBDeleteAction) GetAuthorizations() []string {
 }
 
 func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	db := action.Delegate.DBProvider()
-	id, err := action.Delegate.PKExtractor(r)
+	db := action.Delegate.ProvideDB()
+	id, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	element := action.Delegate.ObjectCreator()
-	action.Delegate.PKAssigner(element, id)
+	element := action.Delegate.CreateObject()
+	if err := action.Delegate.AssignPK(element, id); err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest, Data: element}
+	}
 	if err := db.Delete(element).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError, Data: element}
 	}
 	w.WriteHeader(http.StatusOK)
 	return nil
+}
+
+// DBDeleteDelegate expose the functions needed by a DBDeleteAction
+type DBDeleteDelegate interface {
+
+	// ProvideDB provide the gorm pool
+	ProvideDB() *gorm.DB
+
+	// ExtractPK extract the model's primary key from the http request
+	ExtractPK(r *http.Request) (interface{}, error)
+
+	// CreateObject create the model object
+	CreateObject() interface{}
+
+	// AssignPK assign the primary key value to the model object properly
+	AssignPK(element interface{}, pk interface{}) error
 }

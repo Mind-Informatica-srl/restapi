@@ -8,7 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type DBGetAllAction DatabaseAction
+type DBGetAllAction struct {
+	Path           string
+	Method         string
+	SkipAuth       bool
+	Authorizations []string
+	Delegate       DBGetAllDelegate
+}
 
 func (action *DBGetAllAction) IsSkipAuth() bool {
 	return action.SkipAuth
@@ -27,12 +33,12 @@ func (action *DBGetAllAction) GetAuthorizations() []string {
 }
 
 func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	db := action.Delegate.DBProvider()
+	db := action.Delegate.ProvideDB()
 	db, err := QueryFilter(db, r.URL)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	list := action.Delegate.ListCreator()
+	list := action.Delegate.CreateList()
 	paginationScope, page, pageSize := Paginate(r)
 	var count int64
 	//se è richiesta la paginazione
@@ -41,7 +47,7 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	}
 	if page > 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
-		element := action.Delegate.ObjectCreator()
+		element := action.Delegate.CreateObject()
 		if err = db.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
@@ -58,4 +64,17 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	return nil
+}
+
+// DBGetAllDelegate expose the functions needed by a DBDGetAllAction
+type DBGetAllDelegate interface {
+
+	// ProvideDB provide the gorm pool
+	ProvideDB() *gorm.DB
+
+	// CreateObject create the model object
+	CreateObject() interface{}
+
+	//CreateList create the model object list to be filled by the database interrogation
+	CreateList() interface{}
 }

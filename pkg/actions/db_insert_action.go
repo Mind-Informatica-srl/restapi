@@ -4,9 +4,17 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-type DBInsertAction DatabaseAction
+type DBInsertAction struct {
+	Path           string
+	Method         string
+	SkipAuth       bool
+	Authorizations []string
+	Delegate       DBInsertDelegate
+}
 
 func (action *DBInsertAction) IsSkipAuth() bool {
 	return action.SkipAuth
@@ -25,7 +33,7 @@ func (action *DBInsertAction) GetAuthorizations() []string {
 }
 
 func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	element := action.Delegate.ObjectCreator()
+	element := action.Delegate.CreateObject()
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -36,7 +44,7 @@ func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 
-	db := action.Delegate.DBProvider()
+	db := action.Delegate.ProvideDB()
 	if err := db.Create(element).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
@@ -46,4 +54,14 @@ func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	json.NewEncoder(w).Encode(element)
 
 	return nil
+}
+
+// DBDeleteDelegate expose the functions needed by a DBDeleteAction
+type DBInsertDelegate interface {
+
+	// ProvideDB provide the gorm pool
+	ProvideDB() *gorm.DB
+
+	// CreateObject create the model object
+	CreateObject() interface{}
 }

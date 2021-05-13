@@ -3,9 +3,17 @@ package actions
 import (
 	"encoding/json"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-type DBGetOneAction DatabaseAction
+type DBGetOneAction struct {
+	Path           string
+	Method         string
+	SkipAuth       bool
+	Authorizations []string
+	Delegate       DBGetOneDelegate
+}
 
 func (action *DBGetOneAction) IsSkipAuth() bool {
 	return action.SkipAuth
@@ -24,12 +32,12 @@ func (action *DBGetOneAction) GetAuthorizations() []string {
 }
 
 func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	db := action.Delegate.DBProvider()
-	id, err := action.Delegate.PKExtractor(r)
+	db := action.Delegate.ProvideDB()
+	id, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	element := action.Delegate.ObjectCreator()
+	element := action.Delegate.CreateObject()
 	if err := db.First(element, id).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
@@ -38,4 +46,17 @@ func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	return nil
+}
+
+// DBGetOneDelegate expose the functions needed by a DBGetOneAction
+type DBGetOneDelegate interface {
+
+	// ProvideDB provide the gorm pool
+	ProvideDB() *gorm.DB
+
+	// CreateObject create the model object
+	CreateObject() interface{}
+
+	// ExtractPK extract the model's primary key from the http request
+	ExtractPK(r *http.Request) (interface{}, error)
 }

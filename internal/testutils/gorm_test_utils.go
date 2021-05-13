@@ -2,13 +2,12 @@ package testutils
 
 import (
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/Mind-Informatica-srl/restapi/pkg/delegate"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 // SetupTestForGorm provide a fake connection pool and the mock to verify the test
-func SetupTestForGorm(delegate *delegate.Delegate) sqlmock.Sqlmock {
+func SetupTestForGorm() (*gorm.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		panic(err)
@@ -25,8 +24,5 @@ func SetupTestForGorm(delegate *delegate.Delegate) sqlmock.Sqlmock {
 	if err != nil {
 		panic(err)
 	}
-	delegate.DBProvider = func() *gorm.DB {
-		return connectionPool
-	}
-	return mock
+	return connectionPool, mock
 }

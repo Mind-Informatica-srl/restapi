@@ -27,8 +27,8 @@ func TestDBUpdateAction(t *testing.T) {
 
 	request = mux.SetURLVars(request, vars)
 
-	delegate := testutils.SimpleObjectWithIdDelegate
-	mock := testutils.SetupTestForGorm(&delegate)
+	db, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectWithIdDelegate{DB: db}
 
 	query := `UPDATE "simple_object_with_ids" SET "nome"=\$1,"cognome"=\$2 WHERE "id" = \$3`
 	mock.ExpectBegin()

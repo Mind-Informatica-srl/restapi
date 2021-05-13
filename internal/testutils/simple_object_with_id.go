@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Mind-Informatica-srl/restapi/pkg/delegate"
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 type SimpleObjectWithId struct {
@@ -15,31 +15,41 @@ type SimpleObjectWithId struct {
 	Cognome string
 }
 
-var SimpleObjectWithIdDelegate = delegate.Delegate{
-	ObjectCreator: func() interface{} {
-		return &SimpleObjectWithId{}
-	},
-	PKExtractor: func(r *http.Request) (interface{}, error) {
-		vars := mux.Vars(r)
-		if pk, err := strconv.Atoi(vars["id"]); err != nil {
-			return nil, err
-		} else {
-			return pk, nil
-		}
-	},
-	PKVerificator: func(element interface{}, pk interface{}) (bool, error) {
-		e := element.(*SimpleObjectWithId)
-		id := pk.(int)
-		if e.ID != id {
-			return false, nil
-		}
-		return true, nil
-	},
-	PKAssigner: func(element interface{}, pk interface{}) {
-		e := element.(*SimpleObjectWithId)
-		id := pk.(int)
-		e.ID = id
-	},
+type SimpleObjectWithIdDelegate struct {
+	DB *gorm.DB
+}
+
+func (d SimpleObjectWithIdDelegate) ProvideDB() *gorm.DB {
+	return d.DB
+}
+
+func (d SimpleObjectWithIdDelegate) CreateObject() interface{} {
+	return &SimpleObjectWithId{}
+}
+
+func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (interface{}, error) {
+	vars := mux.Vars(r)
+	if pk, err := strconv.Atoi(vars["id"]); err != nil {
+		return nil, err
+	} else {
+		return pk, nil
+	}
+}
+
+func (d SimpleObjectWithIdDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
+	e := element.(*SimpleObjectWithId)
+	id := pk.(int)
+	if e.ID != id {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (d SimpleObjectWithIdDelegate) AssignPK(element interface{}, pk interface{}) error {
+	e := element.(*SimpleObjectWithId)
+	id := pk.(int)
+	e.ID = id
+	return nil
 }
 
 func SomeSimpleObjectWithId() ([]byte, error) {

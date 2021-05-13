@@ -26,8 +26,8 @@ func TestDBDeleteAction(t *testing.T) {
 
 	request = mux.SetURLVars(request, vars)
 
-	delegate := testutils.SimpleObjectWithIdDelegate
-	mock := testutils.SetupTestForGorm(&delegate)
+	db, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectWithIdDelegate{DB: db}
 
 	query := `DELETE FROM "simple_object_with_ids" WHERE "simple_object_with_ids"."id" = \$1`
 	mock.ExpectBegin()

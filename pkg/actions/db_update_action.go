@@ -4,9 +4,17 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-type DBUpdateAction DatabaseAction
+type DBUpdateAction struct {
+	Path           string
+	Method         string
+	SkipAuth       bool
+	Authorizations []string
+	Delegate       DBUpdateDelegate
+}
 
 func (action *DBUpdateAction) IsSkipAuth() bool {
 	return action.SkipAuth
@@ -25,13 +33,13 @@ func (action *DBUpdateAction) GetAuthorizations() []string {
 }
 
 func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	db := action.Delegate.DBProvider()
-	id, err := action.Delegate.PKExtractor(r)
+	db := action.Delegate.ProvideDB()
+	id, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	element := action.Delegate.ObjectCreator()
+	element := action.Delegate.CreateObject()
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -41,7 +49,7 @@ func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if ok, err := action.Delegate.PKVerificator(element, id); !ok {
+	if ok, err := action.Delegate.VerifyPK(element, id); !ok {
 		pke := NewPKNotVerifiedError(element, id, err)
 		http.Error(w, pke.Error(), http.StatusBadRequest)
 		return
@@ -53,4 +61,20 @@ func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(element)
+}
+
+// DBDeleteDelegate expose the functions needed by a DBDeleteAction
+type DBUpdateDelegate interface {
+
+	// ProvideDB provide the gorm pool
+	ProvideDB() *gorm.DB
+
+	// CreateObject create the model object
+	CreateObject() interface{}
+
+	// VerifyPK check if the value of the primary key in the model object is equal to the passed primary key value
+	VerifyPK(element interface{}, pk interface{}) (bool, error)
+
+	// ExtractPK extract the model's primary key from the http request
+	ExtractPK(r *http.Request) (interface{}, error)
 }

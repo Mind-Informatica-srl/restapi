@@ -18,8 +18,8 @@ func TestDBINsertAction(t *testing.T) {
 
 	request := httptest.NewRequest("POST", "/insert", bytes.NewReader(content))
 	responseWriter := httptest.NewRecorder()
-	delegate := testutils.SimpleObjectDelegate
-	mock := testutils.SetupTestForGorm(&delegate)
+	db, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectDelegate{DB: db}
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO "simple_objects" .*`).WithArgs("John", "Doe").WillReturnResult(sqlmock.NewResult(1, 1))

@@ -3,7 +3,7 @@ package testutils
 import (
 	"io/ioutil"
 
-	"github.com/Mind-Informatica-srl/restapi/pkg/delegate"
+	"gorm.io/gorm"
 )
 
 type SimpleObject struct {
@@ -11,13 +11,20 @@ type SimpleObject struct {
 	Cognome string `json:"cognome"`
 }
 
-var SimpleObjectDelegate = delegate.Delegate{
-	ObjectCreator: func() interface{} {
-		return &SimpleObject{}
-	},
-	ListCreator: func() interface{} {
-		return &[]SimpleObject{}
-	},
+type SimpleObjectDelegate struct {
+	DB *gorm.DB
+}
+
+func (d SimpleObjectDelegate) ProvideDB() *gorm.DB {
+	return d.DB
+}
+
+func (d SimpleObjectDelegate) CreateObject() interface{} {
+	return &SimpleObject{}
+}
+
+func (d SimpleObjectDelegate) CreateList() interface{} {
+	return &[]SimpleObject{}
 }
 
 func SomeSimpleObject() ([]byte, error) {

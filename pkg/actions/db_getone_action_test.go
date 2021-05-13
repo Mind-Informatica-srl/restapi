@@ -22,8 +22,8 @@ func TestDBIGetOneAction(t *testing.T) {
 	}
 
 	request = mux.SetURLVars(request, vars)
-	delegate := testutils.SimpleObjectWithIdDelegate
-	mock := testutils.SetupTestForGorm(&delegate)
+	db, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectWithIdDelegate{DB: db}
 
 	rows := sqlmock.NewRows([]string{"id", "nome", "cognome"}).
 		AddRow("1", "mario", "rossi").AddRow("2", "paolo", "bianchi")

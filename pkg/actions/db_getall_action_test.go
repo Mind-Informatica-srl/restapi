@@ -19,8 +19,8 @@ func TestDBGetAllAction(t *testing.T) {
 
 	request := httptest.NewRequest("GET", "/getall", bytes.NewReader(content))
 	responseWriter := httptest.NewRecorder()
-	delegate := testutils.SimpleObjectDelegate
-	mock := testutils.SetupTestForGorm(&delegate)
+	db, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectDelegate{DB: db}
 
 	rows := sqlmock.NewRows([]string{"nome", "cognome"}).
 		AddRow("mario", "rossi").AddRow("paolo", "bianchi")
@@ -63,8 +63,8 @@ func TestDBIGetAllActionWithQueryParams(t *testing.T) {
 	request := httptest.NewRequest("GET", "/getall?q=nome.equal=mario", bytes.NewReader(content))
 	responseWriter := httptest.NewRecorder()
 
-	delegate := testutils.SimpleObjectDelegate
-	mock := testutils.SetupTestForGorm(&delegate)
+	db, mock := testutils.SetupTestForGorm()
+	delegate := testutils.SimpleObjectDelegate{DB: db}
 
 	rows := sqlmock.NewRows([]string{"nome", "cognome"}).
 		AddRow("mario", "rossi")
