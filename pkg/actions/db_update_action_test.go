@@ -39,7 +39,7 @@ func TestDBUpdateAction(t *testing.T) {
 		Delegate: delegate,
 	}
 
-	action.ServeHTTP(responseWriter, request)
+	action.Serve(responseWriter, request)
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Log(err)
 		t.Fail()

@@ -35,7 +35,7 @@ func (action *DBUpdateAction) GetAuthorizations() []string {
 	return action.Authorizations
 }
 
-func (action *DBUpdateAction) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) {
 	db := action.Delegate.ProvideDB()
 	id, err := action.Delegate.ExtractPK(r)
 	if err != nil {
