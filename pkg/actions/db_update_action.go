@@ -13,7 +13,7 @@ type DBUpdateAction struct {
 	Method         string
 	SkipAuth       bool
 	Authorizations []string
-	ScopeDB        func(db *gorm.DB, r *http.Request) (func(*gorm.DB) *gorm.DB, error)
+	ScopeDB        func(r *http.Request) (func(*gorm.DB) *gorm.DB, error)
 	Delegate       DBUpdateDelegate
 }
 
@@ -55,7 +55,7 @@ func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	}
 	db := action.Delegate.ProvideDB()
 	if action.ScopeDB != nil {
-		if scope, err := action.ScopeDB(db, r); err != nil {
+		if scope, err := action.ScopeDB(r); err != nil {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		} else {
 			db = db.Scopes(scope)
