@@ -31,7 +31,7 @@ func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	element := action.Delegate.ObjectCreator()
 	action.Delegate.PKAssigner(element, id)
 	if err := db.Delete(element).Error; err != nil {
-		return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		return &ActionError{Err: err, Status: http.StatusInternalServerError, Data: element}
 	}
 	w.WriteHeader(http.StatusOK)
 	return nil
