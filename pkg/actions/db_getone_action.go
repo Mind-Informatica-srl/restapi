@@ -24,7 +24,10 @@ func (action *DBGetOneAction) GetPath() string {
 }
 
 func (action *DBGetOneAction) GetMethod() string {
-	return action.Method
+	if action.Method != "" {
+		return action.Method
+	}
+	return "GET"
 }
 
 func (action *DBGetOneAction) GetAuthorizations() []string {

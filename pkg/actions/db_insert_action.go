@@ -25,7 +25,10 @@ func (action *DBInsertAction) GetPath() string {
 }
 
 func (action *DBInsertAction) GetMethod() string {
-	return action.Method
+	if action.Method != "" {
+		return action.Method
+	}
+	return "POST"
 }
 
 func (action *DBInsertAction) GetAuthorizations() []string {

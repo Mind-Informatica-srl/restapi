@@ -23,7 +23,10 @@ func (action *DBDeleteAction) GetPath() string {
 }
 
 func (action *DBDeleteAction) GetMethod() string {
-	return action.Method
+	if action.Method != "" {
+		return action.Method
+	}
+	return "DELETE"
 }
 
 func (action *DBDeleteAction) GetAuthorizations() []string {

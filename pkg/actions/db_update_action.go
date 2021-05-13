@@ -25,7 +25,10 @@ func (action *DBUpdateAction) GetPath() string {
 }
 
 func (action *DBUpdateAction) GetMethod() string {
-	return action.Method
+	if action.Method != "" {
+		return action.Method
+	}
+	return "PUT"
 }
 
 func (action *DBUpdateAction) GetAuthorizations() []string {
