@@ -13,6 +13,7 @@ type DBGetAllAction struct {
 	Method         string
 	SkipAuth       bool
 	Authorizations []string
+	ScopeDB        func(db *gorm.DB, r *http.Request) (func(*gorm.DB) *gorm.DB, error)
 	Delegate       DBGetAllDelegate
 }
 
@@ -37,6 +38,13 @@ func (action *DBGetAllAction) GetAuthorizations() []string {
 
 func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
 	db := action.Delegate.ProvideDB()
+	if action.ScopeDB != nil {
+		if scope, err := action.ScopeDB(db, r); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		} else {
+			db = db.Scopes(scope)
+		}
+	}
 	db, err := QueryFilter(db, r.URL)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}

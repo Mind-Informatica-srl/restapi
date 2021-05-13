@@ -13,6 +13,7 @@ type DBInsertAction struct {
 	Method         string
 	SkipAuth       bool
 	Authorizations []string
+	ScopeDB        func(db *gorm.DB, r *http.Request) (func(*gorm.DB) *gorm.DB, error)
 	Delegate       DBInsertDelegate
 }
 
@@ -48,6 +49,13 @@ func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	}
 
 	db := action.Delegate.ProvideDB()
+	if action.ScopeDB != nil {
+		if scope, err := action.ScopeDB(db, r); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		} else {
+			db = db.Scopes(scope)
+		}
+	}
 	if err := db.Create(element).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}

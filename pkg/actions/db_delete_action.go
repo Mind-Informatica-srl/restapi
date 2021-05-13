@@ -11,6 +11,7 @@ type DBDeleteAction struct {
 	Method         string
 	SkipAuth       bool
 	Authorizations []string
+	ScopeDB        func(db *gorm.DB, r *http.Request) (func(*gorm.DB) *gorm.DB, error)
 	Delegate       DBDeleteDelegate
 }
 
@@ -34,7 +35,6 @@ func (action *DBDeleteAction) GetAuthorizations() []string {
 }
 
 func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	db := action.Delegate.ProvideDB()
 	id, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
@@ -42,6 +42,14 @@ func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	element := action.Delegate.CreateObject()
 	if err := action.Delegate.AssignPK(element, id); err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest, Data: element}
+	}
+	db := action.Delegate.ProvideDB()
+	if action.ScopeDB != nil {
+		if scope, err := action.ScopeDB(db, r); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		} else {
+			db = db.Scopes(scope)
+		}
 	}
 	if err := db.Delete(element).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError, Data: element}
