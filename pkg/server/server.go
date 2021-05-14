@@ -83,7 +83,7 @@ func requestCorsMiddleware() mux.MiddlewareFunc {
 func actionHandler(action actions.AbstractAction) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := action.Serve(w, r); err != nil {
-			logger.Log().Error(err, "server error", err.Data)
+			logger.Log().Error(err, "server error", "data error", err.Data)
 			http.Error(w, err.Error(), err.Status)
 		}
 	})
