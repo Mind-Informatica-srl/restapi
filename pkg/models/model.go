@@ -31,8 +31,8 @@ func (d BaseDelegate) ProvideDB() *gorm.DB {
 	return d.DBProvider()
 }
 
-func (d BaseDelegate) AssignPK(element PKModel, pk interface{}) error {
-	return element.SetPK(pk)
+func (d BaseDelegate) AssignPK(element interface{}, pk interface{}) error {
+	return element.(PKModel).SetPK(pk)
 }
 
 func (d BaseDelegate) CreateObject() interface{} {
@@ -43,8 +43,8 @@ func (d BaseDelegate) CreateList() interface{} {
 	return d.ListCreator()
 }
 
-func (d BaseDelegate) VerifyPK(element PKModel, pk interface{}) (bool, error) {
-	return element.VerifyPK(pk)
+func (d BaseDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
+	return element.(PKModel).VerifyPK(pk)
 }
 
 func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
