@@ -19,7 +19,7 @@ type PKModel interface {
 type BaseDelegate struct {
 	DBProvider    func() *gorm.DB
 	ObjectCreator func() PKModel
-	ListCreator   func() []PKModel
+	ListCreator   func() interface{}
 	PKExtractor   func(r *http.Request) (interface{}, error)
 }
 
@@ -47,7 +47,7 @@ func (d BaseDelegate) VerifyPK(element PKModel, pk interface{}) (bool, error) {
 	return element.VerifyPK(pk)
 }
 
-func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() []PKModel, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
+func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
 	return BaseDelegate{
 		DBProvider:    dbProvider,
 		ObjectCreator: objectCreator,
