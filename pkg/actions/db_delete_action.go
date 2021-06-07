@@ -51,7 +51,7 @@ func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 			db = db.Scopes(scope)
 		}
 	}
-	if err := db.Delete(&element).Error; err != nil {
+	if err := db.Delete(element).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError, Data: element}
 	}
 	w.WriteHeader(http.StatusOK)
