@@ -40,7 +40,7 @@ func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 	element := action.Delegate.CreateObject()
-	if err := action.Delegate.AssignPK(element, id); err != nil {
+	if err := action.Delegate.AssignPK(&element, id); err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest, Data: element}
 	}
 	db := action.Delegate.ProvideDB()
