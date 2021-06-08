@@ -15,6 +15,17 @@ type SimpleObjectWithId struct {
 	Cognome string
 }
 
+// SetPK set the pk for the model
+func (o *SimpleObjectWithId) SetPK(pk interface{}) error {
+	o.ID = pk.(int)
+	return nil
+}
+
+// VerifyPK check the pk value
+func (o *SimpleObjectWithId) VerifyPK(pk interface{}) (bool, error) {
+	return o.ID == pk.(int), nil
+}
+
 type SimpleObjectWithIdDelegate struct {
 	DB *gorm.DB
 }

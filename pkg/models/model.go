@@ -32,7 +32,8 @@ func (d BaseDelegate) ProvideDB() *gorm.DB {
 }
 
 func (d BaseDelegate) AssignPK(element interface{}, pk interface{}) error {
-	return element.(PKModel).SetPK(pk)
+	e := element.(PKModel)
+	return e.SetPK(pk)
 }
 
 func (d BaseDelegate) CreateObject() interface{} {
