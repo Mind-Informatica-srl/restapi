@@ -9,7 +9,10 @@ import (
 func TestPkModel(t *testing.T) {
 	var obj testutils.SimpleObjectWithId
 	id := 1
-	obj.SetPK(id)
+	if err := obj.SetPK(id); err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 	if obj.ID != id {
 		t.Log("obj ID should be equal to id value")
 		t.Fail()

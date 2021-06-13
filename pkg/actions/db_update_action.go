@@ -66,7 +66,9 @@ func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	}
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(element)
+	if err := json.NewEncoder(w).Encode(element); err != nil {
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
+	}
 
 	return nil
 }

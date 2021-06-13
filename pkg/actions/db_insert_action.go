@@ -62,7 +62,9 @@ func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 
 	w.WriteHeader(http.StatusCreated)
 
-	json.NewEncoder(w).Encode(element)
+	if err := json.NewEncoder(w).Encode(element); err != nil {
+		return &ActionError{Err: err, Status: http.StatusInternalServerError}
+	}
 
 	return nil
 }
