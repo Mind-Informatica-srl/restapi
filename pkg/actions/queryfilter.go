@@ -34,7 +34,7 @@ var sqlOperators = map[string]string{
 
 var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
-var onlyNumber = regexp.MustCompile("[0-9\\.\\,]*")
+var onlyNumber = regexp.MustCompile(`[0-9\.\,]*`)
 
 func ToSnakeCase(str string) string {
 	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
@@ -101,7 +101,7 @@ func composeCriteria(attributeName string, operatorName string, stringValue stri
 		if onlyNumber.FindString(stringValue) == stringValue {
 			value = stringValue
 		} else {
-			value = "lower('" + stringValue + "')"
+			value = strings.ToLower(stringValue)
 			columnName = "lower(" + columnName + ")"
 		}
 	case "notequal":
@@ -145,7 +145,7 @@ func getWhereCondition(attributeName string, operatorName string, stringValue st
 		for i := 0; i < len(cols); i++ {
 			c, o, v := composeCriteria(cols[i], operatorName, values[i])
 			vs[i] = v
-			if writeAnd == true {
+			if writeAnd {
 				condition.WriteString(" and ")
 			}
 			condition.WriteString("(")
@@ -206,12 +206,6 @@ func QueryPreload(db *gorm.DB, selectColumns []string) *gorm.DB {
 				//se l'i-esimo selectColumns ha un ".", si splitta e si prende il primo valore per il preload (es: Cliente.RagioneSociale => si fa il preload di Cliente)
 				ref := strings.Split(selectColumns[i], ".")[0]
 				db = db.Preload(ref)
-			} else {
-				//altrimenti si aggiunge il nome della colonna in snakecase a columnNames (es: PartitaIva => partita_iva)
-				// if columnNames != "" {
-				// 	columnNames = columnNames + ","
-				// }
-				// columnNames = columnNames + ToSnakeCase(selectColumns[i])
 			}
 		}
 		//db = db.Select(columnNames)
