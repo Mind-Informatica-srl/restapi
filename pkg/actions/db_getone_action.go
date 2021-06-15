@@ -2,6 +2,7 @@ package actions
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -49,12 +50,16 @@ func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 			db = db.Scopes(scope)
 		}
 	}
-	if err := db.First(element, id).Error; err != nil {
+	var rnf bool
+	if err := db.First(element, id).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+		rnf = true
+	} else if err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
-
-	if err := json.NewEncoder(w).Encode(element); err != nil {
-		return &ActionError{Err: err, Status: http.StatusInternalServerError}
+	if !rnf {
+		if err := json.NewEncoder(w).Encode(element); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		}
 	}
 	return nil
 }
