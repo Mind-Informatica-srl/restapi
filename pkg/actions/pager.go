@@ -23,6 +23,7 @@ func (p Pager) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// Paginate restituisce scope per impaginare i risultati di una query
 func Paginate(r *http.Request) (paginateScope func(db *gorm.DB) *gorm.DB, page int, pageSize int) {
 	var pageString, pageSizeString string
 	if params, ok := r.URL.Query()["page"]; ok {

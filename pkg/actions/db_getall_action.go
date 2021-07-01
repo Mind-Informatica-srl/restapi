@@ -51,9 +51,10 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	}
 	list := action.Delegate.CreateList()
 	paginationScope, page, pageSize := Paginate(r)
+	orderScope, _, _ := Ordinate(r)
 	var count int64
 	//se è richiesta la paginazione
-	if err := db.Scopes(paginationScope).Find(list).Error; err != nil {
+	if err := db.Scopes(orderScope, paginationScope).Find(list).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	if page > 0 && pageSize > 0 {
