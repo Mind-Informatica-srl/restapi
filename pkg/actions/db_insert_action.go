@@ -56,7 +56,7 @@ func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 			db = db.Scopes(scope)
 		}
 	}
-	if err := db.Create(&element).Error; err != nil {
+	if err := db.Create(element).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
 
