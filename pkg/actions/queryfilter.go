@@ -105,18 +105,18 @@ func composeCriteria(attributeName string, operatorName string, stringValue stri
 			columnName = "lower(" + columnName + ")"
 		}
 	case "notequal":
-		value = "lower('" + stringValue + "')"
+		value = strings.ToLower(stringValue)
 		columnName = "lower(" + columnName + ")"
 	case "equalboolean":
 		value = "'" + stringValue + "'"
 	case "like":
-		value = "lower('%" + stringValue + "%')"
+		value = "%" + strings.ToLower(stringValue) + "%"
 		columnName = "lower(" + columnName + ")"
 	case "likestart":
-		value = "lower('" + stringValue + "%')"
+		value = "%" + strings.ToLower(stringValue) + "%"
 		columnName = "lower(" + columnName + ")"
 	case "likeend":
-		value = "lower('%" + stringValue + "')"
+		value = "%" + strings.ToLower(stringValue) + "%"
 		columnName = "lower(" + columnName + ")"
 	case "isnull":
 		value = ""
