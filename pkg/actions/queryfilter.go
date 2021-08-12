@@ -55,7 +55,7 @@ func QueryFilter(db *gorm.DB, url *url.URL) (*gorm.DB, error) {
 				//per ogni criterio si splitta per il =
 				criteria := strings.Split(c, "=") //la parte sinistra rappresenta il campo e l'operatore, la parte di destra il valore
 				if len(criteria) < 2 {
-					return nil, errors.New("Parametri di ricerca non validi")
+					return nil, errors.New("parametri di ricerca non validi")
 				}
 				//si splitta la parte sinistra per il .
 				p := strings.Split(criteria[0], ".")
@@ -65,7 +65,12 @@ func QueryFilter(db *gorm.DB, url *url.URL) (*gorm.DB, error) {
 				if err != nil {
 					return nil, err
 				}
-				db = db.Where(condition, values...)
+				if values != nil {
+					db = db.Where(condition, values...)
+				} else {
+					// values è nil qualora l'operatore è isnull o isnotnull
+					db = db.Where(condition)
+				}
 				/*if len(p) > 2 {
 					//caso complesso
 					condition := prepareSubQuery(db, p, valore)
@@ -160,6 +165,9 @@ func getWhereCondition(attributeName string, operatorName string, stringValue st
 		return condition.String(), vs, nil
 	} else {
 		c, o, v := composeCriteria(attributeName, operatorName, stringValue)
+		if strings.HasSuffix(operatorName, "null") {
+			return c + " " + o, nil, nil
+		}
 		return c + " " + o + " ?", []interface{}{v}, nil
 	}
 }
