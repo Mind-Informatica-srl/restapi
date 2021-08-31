@@ -17,7 +17,7 @@ func Ordinate(r *http.Request) (paginateScope func(db *gorm.DB) *gorm.DB, sort s
 
 	paginateScope = func(db *gorm.DB) *gorm.DB {
 		if sort != "" {
-			return db.Order(sort + " " + direction)
+			return db.Order(ToSnakeCase(sort) + " " + direction)
 		}
 		return db
 	}
