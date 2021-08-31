@@ -196,7 +196,25 @@ func prepareSubQuery(p []string, stringValue string) (string, []interface{}, err
 		default:
 			a := strings.Split(p[i], "|") //ClienteID|referenti_clienti|ClienteID
 			if len(a) == 3 {
-				whereCondition = ToSnakeCase(a[0]) + " in (select " + ToSnakeCase(a[2]) + " from " + a[1] + " where (" + whereCondition + ") )"
+				var connector string
+				if strings.HasPrefix(a[0], "!") {
+					// se a inizia per "!" connector sarà pari a "not in"
+					connector = "not in"
+				} else {
+					connector = "in"
+				}
+				var sb strings.Builder
+				sb.WriteString(strings.ReplaceAll(ToSnakeCase(a[0]), "!", ""))
+				sb.WriteString(" ")
+				sb.WriteString(connector)
+				sb.WriteString(" (select ")
+				sb.WriteString(ToSnakeCase(a[2]))
+				sb.WriteString(" from ")
+				sb.WriteString(a[1])
+				sb.WriteString(" where (")
+				sb.WriteString(whereCondition)
+				sb.WriteString(") )")
+				whereCondition = sb.String()
 			} else {
 				return "", []interface{}{}, errors.New("filtro non corretto")
 			}
