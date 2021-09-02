@@ -14,7 +14,19 @@ func (j *OnlyDate) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	t, err := time.Parse(constants.DateFormatStringYYYYMMDD, s)
 	if err != nil {
-		return err
+		// _, ok := err.(*time.ParseError)
+		// if !ok {
+		// 	return err
+		// }
+		if strings.Contains(s, "T") {
+			s = strings.Split(s, "T")[0]
+			t, err = time.Parse(constants.DateFormatStringYYYYMMDD, s)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
 	*j = OnlyDate(t)
 	return nil
