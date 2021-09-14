@@ -19,3 +19,9 @@ func (j *JSONB) Scan(value interface{}) error {
 	}
 	return nil
 }
+
+// GormDataType per JSONB
+// serve a gorm per sapere il tipo sql
+func (JSONB) GormDataType() string {
+	return "jsonb"
+}
