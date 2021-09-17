@@ -3,7 +3,7 @@ package models
 import (
 	"testing"
 
-	"github.com/Mind-Informatica-srl/restapi/internal/testutils"
+	"github.com/Mind-Informatica-srl/restapi/pkg/testutils"
 )
 
 func TestPkModel(t *testing.T) {

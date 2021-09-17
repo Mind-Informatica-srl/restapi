@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/Mind-Informatica-srl/restapi/internal/testutils"
+	"github.com/Mind-Informatica-srl/restapi/pkg/testutils"
 )
 
 func TestDBINsertAction(t *testing.T) {
