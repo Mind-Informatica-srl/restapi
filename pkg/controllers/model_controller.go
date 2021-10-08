@@ -3,40 +3,68 @@ package controllers
 import "github.com/Mind-Informatica-srl/restapi/pkg/actions"
 
 // CreateModelController create a standard controller based on a delegate
-func CreateModelController(path string, delegate interface{}) Controller {
+// without auth
+func CreateModelController(path string,
+	delegate interface{},
+) Controller {
+	return CreateModelControllerWithAuth(path,
+		delegate,
+		[]string{},
+		[]string{},
+		[]string{},
+		[]string{},
+		[]string{},
+	)
+}
+
+// CreateModelControllerWithAuth create a standard controller based on a delegate
+// with auth
+func CreateModelControllerWithAuth(path string,
+	delegate interface{},
+	getAllAuth []string,
+	getOneAuth []string,
+	insertAuth []string,
+	updateAuth []string,
+	deleteAuth []string,
+) Controller {
 	gad := delegate.(actions.DBGetAllDelegate)
 	getAllAction := actions.DBGetAllAction{
-		Method:   "GET",
-		Path:     "",
-		Delegate: gad,
+		Method:         "GET",
+		Path:           "",
+		Delegate:       gad,
+		Authorizations: getAllAuth,
 	}
 
 	god := delegate.(actions.DBGetOneDelegate)
 	getOneAction := actions.DBGetOneAction{
-		Method:   "GET",
-		Path:     "/{id}",
-		Delegate: god,
+		Method:         "GET",
+		Path:           "/{id}",
+		Delegate:       god,
+		Authorizations: getOneAuth,
 	}
 
 	id := delegate.(actions.DBInsertDelegate)
 	insertAction := actions.DBInsertAction{
-		Method:   "POST",
-		Path:     "",
-		Delegate: id,
+		Method:         "POST",
+		Path:           "",
+		Delegate:       id,
+		Authorizations: insertAuth,
 	}
 
 	ud := delegate.(actions.DBUpdateDelegate)
 	updateAction := actions.DBUpdateAction{
-		Method:   "PUT",
-		Path:     "/{id}",
-		Delegate: ud,
+		Method:         "PUT",
+		Path:           "/{id}",
+		Delegate:       ud,
+		Authorizations: updateAuth,
 	}
 
 	dd := delegate.(actions.DBDeleteDelegate)
 	deleteAction := actions.DBDeleteAction{
-		Method:   "DELETE",
-		Path:     "/{id}",
-		Delegate: dd,
+		Method:         "DELETE",
+		Path:           "/{id}",
+		Delegate:       dd,
+		Authorizations: deleteAuth,
 	}
 
 	return NewController(path, []actions.AbstractAction{
