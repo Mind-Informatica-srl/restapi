@@ -56,11 +56,16 @@ func (d *BaseDelegate) PKUrl() string {
 	return "/{id}"
 }
 
-func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
+func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error), pkUrl *string) BaseDelegate {
 	return BaseDelegate{
 		DBProvider:    dbProvider,
 		ObjectCreator: objectCreator,
 		ListCreator:   listCreator,
 		PKExtractor:   pkExtractor,
+		PKUrlPart:     pkUrl,
 	}
+}
+
+func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
+	return NewBaseDelegateWithPKUrl(dbProvider, objectCreator, listCreator, pkExtractor, nil)
 }
