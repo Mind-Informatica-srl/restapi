@@ -21,6 +21,7 @@ type BaseDelegate struct {
 	ObjectCreator func() PKModel
 	ListCreator   func() interface{}
 	PKExtractor   func(r *http.Request) (interface{}, error)
+	PKUrlPart     *string
 }
 
 func (d BaseDelegate) ExtractPK(r *http.Request) (interface{}, error) {
@@ -46,6 +47,13 @@ func (d BaseDelegate) CreateList() interface{} {
 
 func (d BaseDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
 	return element.(PKModel).VerifyPK(pk)
+}
+
+func (d *BaseDelegate) PKUrl() string {
+	if d.PKUrlPart != nil {
+		return *d.PKUrlPart
+	}
+	return "/{id}"
 }
 
 func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
