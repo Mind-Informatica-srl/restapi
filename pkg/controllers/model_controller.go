@@ -2,6 +2,11 @@ package controllers
 
 import "github.com/Mind-Informatica-srl/restapi/pkg/actions"
 
+// PKUrlProvider provide the url part referred to the pk
+type PKUrlProvider interface {
+	PKUrl() string
+}
+
 // CreateModelController create a standard controller based on a delegate
 // without auth
 func CreateModelController(path string,
@@ -27,6 +32,10 @@ func CreateModelControllerWithAuth(path string,
 	updateAuth []string,
 	deleteAuth []string,
 ) Controller {
+	pkurl := "/{id}"
+	if d, ok := delegate.(PKUrlProvider); ok {
+		pkurl = d.PKUrl()
+	}
 	gad := delegate.(actions.DBGetAllDelegate)
 	getAllAction := actions.DBGetAllAction{
 		Method:         "GET",
@@ -38,7 +47,7 @@ func CreateModelControllerWithAuth(path string,
 	god := delegate.(actions.DBGetOneDelegate)
 	getOneAction := actions.DBGetOneAction{
 		Method:         "GET",
-		Path:           "/{id}",
+		Path:           pkurl,
 		Delegate:       god,
 		Authorizations: getOneAuth,
 	}
@@ -54,7 +63,7 @@ func CreateModelControllerWithAuth(path string,
 	ud := delegate.(actions.DBUpdateDelegate)
 	updateAction := actions.DBUpdateAction{
 		Method:         "PUT",
-		Path:           "/{id}",
+		Path:           pkurl,
 		Delegate:       ud,
 		Authorizations: updateAuth,
 	}
@@ -62,7 +71,7 @@ func CreateModelControllerWithAuth(path string,
 	dd := delegate.(actions.DBDeleteDelegate)
 	deleteAction := actions.DBDeleteAction{
 		Method:         "DELETE",
-		Path:           "/{id}",
+		Path:           pkurl,
 		Delegate:       dd,
 		Authorizations: deleteAuth,
 	}
