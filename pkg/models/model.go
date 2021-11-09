@@ -49,7 +49,7 @@ func (d BaseDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error
 	return element.(PKModel).VerifyPK(pk)
 }
 
-func (d *BaseDelegate) PKUrl() string {
+func (d BaseDelegate) PKUrl() string {
 	if d.PKUrlPart != nil {
 		return *d.PKUrlPart
 	}
