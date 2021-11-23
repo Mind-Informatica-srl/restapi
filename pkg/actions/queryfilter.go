@@ -17,6 +17,7 @@ var sqlOperators = map[string]string{
 	"equaldate":      "=",
 	"notequaldate":   "<>",
 	"equalboolean":   "=",
+	"notlike":        "not like",
 	"like":           "like",
 	"likestart":      "like",
 	"likeend":        "like",
@@ -115,6 +116,9 @@ func composeCriteria(attributeName string, operatorName string, stringValue stri
 	// case "equalboolean":
 	// 	value = "'" + stringValue + "'"
 	case "like":
+		value = "%" + strings.ToLower(stringValue) + "%"
+		columnName = "lower(" + columnName + ")"
+	case "notlike":
 		value = "%" + strings.ToLower(stringValue) + "%"
 		columnName = "lower(" + columnName + ")"
 	case "likestart":
