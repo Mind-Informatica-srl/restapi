@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var SqlOperators = map[string]string{
+var sqlOperators = map[string]string{
 	"equal":          "=",
 	"notequal":       "<>",
 	"equalnumber":    "=",
@@ -99,7 +99,7 @@ func composeCriteria(attributeName string, operatorName string, stringValue stri
 	//field, ok := reflect.TypeOf(c).Elem().FieldByName("nome attributo")
 	//tag = string(field.Tag)
 	columnName := ToSnakeCase(attributeName)
-	operator := SqlOperators[operatorName]
+	operator := GetSqlOperator(operatorName)
 	onlyNumber.FindString(stringValue)
 	var value string
 	switch operatorName {
@@ -241,6 +241,11 @@ func QueryPreload(db *gorm.DB, selectColumns []string) *gorm.DB {
 		//db = db.Select(columnNames)
 	}
 	return db
+}
+
+// GetSqlOperator resituisce l'operatore corrispondente
+func GetSqlOperator(operatorName string) string {
+	return sqlOperators[operatorName]
 }
 
 //NON VA BENE SE CI SONO CAMPI CALCOLATI
