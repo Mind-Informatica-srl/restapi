@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var sqlOperators = map[string]string{
+var SqlOperators = map[string]string{
 	"equal":          "=",
 	"notequal":       "<>",
 	"equalnumber":    "=",
@@ -99,7 +99,7 @@ func composeCriteria(attributeName string, operatorName string, stringValue stri
 	//field, ok := reflect.TypeOf(c).Elem().FieldByName("nome attributo")
 	//tag = string(field.Tag)
 	columnName := ToSnakeCase(attributeName)
-	operator := sqlOperators[operatorName]
+	operator := SqlOperators[operatorName]
 	onlyNumber.FindString(stringValue)
 	var value string
 	switch operatorName {
