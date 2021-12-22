@@ -84,3 +84,61 @@ func CreateModelControllerWithAuth(path string,
 		&deleteAction,
 	})
 }
+
+// CreateModelControllerSkipAuth create a standard controller based on a delegate
+// skipping authentication
+func CreateModelControllerSkipAuth(path string,
+	delegate interface{},
+) Controller {
+	pkurl := "/{id}"
+	if d, ok := delegate.(PKUrlProvider); ok {
+		pkurl = d.PKUrl()
+	}
+	gad := delegate.(actions.DBGetAllDelegate)
+	getAllAction := actions.DBGetAllAction{
+		Method:   "GET",
+		Path:     "",
+		Delegate: gad,
+		SkipAuth: true,
+	}
+
+	god := delegate.(actions.DBGetOneDelegate)
+	getOneAction := actions.DBGetOneAction{
+		Method:   "GET",
+		Path:     pkurl,
+		Delegate: god,
+		SkipAuth: true,
+	}
+
+	id := delegate.(actions.DBInsertDelegate)
+	insertAction := actions.DBInsertAction{
+		Method:   "POST",
+		Path:     "",
+		Delegate: id,
+		SkipAuth: true,
+	}
+
+	ud := delegate.(actions.DBUpdateDelegate)
+	updateAction := actions.DBUpdateAction{
+		Method:   "PUT",
+		Path:     pkurl,
+		Delegate: ud,
+		SkipAuth: true,
+	}
+
+	dd := delegate.(actions.DBDeleteDelegate)
+	deleteAction := actions.DBDeleteAction{
+		Method:   "DELETE",
+		Path:     pkurl,
+		Delegate: dd,
+		SkipAuth: true,
+	}
+
+	return NewController(path, []actions.AbstractAction{
+		&getAllAction,
+		&getOneAction,
+		&insertAction,
+		&updateAction,
+		&deleteAction,
+	})
+}
