@@ -39,7 +39,10 @@ func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	element := action.Delegate.CreateObject()
+	element, err := action.Delegate.CreateObject(r)
+	if err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
+	}
 	if err := action.Delegate.AssignPK(element, id); err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest, Data: element}
 	}
@@ -68,7 +71,7 @@ type DBDeleteDelegate interface {
 	ExtractPK(r *http.Request) (interface{}, error)
 
 	// CreateObject create the model object
-	CreateObject() interface{}
+	CreateObject(r *http.Request) (interface{}, error)
 
 	// AssignPK assign the primary key value to the model object properly
 	AssignPK(element interface{}, pk interface{}) error

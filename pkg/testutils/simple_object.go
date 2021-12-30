@@ -2,6 +2,7 @@ package testutils
 
 import (
 	"io/ioutil"
+	"net/http"
 
 	"gorm.io/gorm"
 )
@@ -19,12 +20,12 @@ func (d SimpleObjectDelegate) ProvideDB() *gorm.DB {
 	return d.DB
 }
 
-func (d SimpleObjectDelegate) CreateObject() interface{} {
-	return &SimpleObject{}
+func (d SimpleObjectDelegate) CreateObject(r *http.Request) (interface{}, error) {
+	return &SimpleObject{}, nil
 }
 
-func (d SimpleObjectDelegate) CreateList() interface{} {
-	return &[]SimpleObject{}
+func (d SimpleObjectDelegate) CreateList(r *http.Request) (interface{}, error) {
+	return &[]SimpleObject{}, nil
 }
 
 func SomeSimpleObject() ([]byte, error) {

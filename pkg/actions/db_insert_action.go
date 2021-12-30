@@ -37,8 +37,10 @@ func (action *DBInsertAction) GetAuthorizations() []string {
 }
 
 func (action *DBInsertAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	element := action.Delegate.CreateObject()
-
+	element, err := action.Delegate.CreateObject(r)
+	if err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
+	}
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
@@ -76,5 +78,5 @@ type DBInsertDelegate interface {
 	ProvideDB() *gorm.DB
 
 	// CreateObject create the model object
-	CreateObject() interface{}
+	CreateObject(r *http.Request) (interface{}, error)
 }

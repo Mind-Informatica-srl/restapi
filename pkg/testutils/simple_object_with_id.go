@@ -34,8 +34,8 @@ func (d SimpleObjectWithIdDelegate) ProvideDB() *gorm.DB {
 	return d.DB
 }
 
-func (d SimpleObjectWithIdDelegate) CreateObject() interface{} {
-	return &SimpleObjectWithId{}
+func (d SimpleObjectWithIdDelegate) CreateObject(r *http.Request) (interface{}, error) {
+	return &SimpleObjectWithId{}, nil
 }
 
 func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (interface{}, error) {

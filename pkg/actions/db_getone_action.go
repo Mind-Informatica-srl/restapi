@@ -41,7 +41,10 @@ func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	element := action.Delegate.CreateObject()
+	element, err := action.Delegate.CreateObject(r)
+	if err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
+	}
 	db := action.Delegate.ProvideDB()
 	if action.ScopeDB != nil {
 		if scope, err := action.ScopeDB(r); err != nil {
@@ -71,7 +74,7 @@ type DBGetOneDelegate interface {
 	ProvideDB() *gorm.DB
 
 	// CreateObject create the model object
-	CreateObject() interface{}
+	CreateObject(r *http.Request) (interface{}, error)
 
 	// ExtractPK extract the model's primary key from the http request
 	ExtractPK(r *http.Request) (interface{}, error)

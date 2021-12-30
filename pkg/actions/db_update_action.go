@@ -41,7 +41,10 @@ func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	element := action.Delegate.CreateObject()
+	element, err := action.Delegate.CreateObject(r)
+	if err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
+	}
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
@@ -80,7 +83,7 @@ type DBUpdateDelegate interface {
 	ProvideDB() *gorm.DB
 
 	// CreateObject create the model object
-	CreateObject() interface{}
+	CreateObject(r *http.Request) (interface{}, error)
 
 	// VerifyPK check if the value of the primary key in the model object is equal to the passed primary key value
 	VerifyPK(element interface{}, pk interface{}) (bool, error)

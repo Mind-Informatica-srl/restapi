@@ -49,7 +49,10 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	list := action.Delegate.CreateList()
+	list, err := action.Delegate.CreateList(r)
+	if err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
+	}
 	paginationScope, page, pageSize := Paginate(r)
 	orderScope, _, _ := Ordinate(r)
 	var count int64
@@ -59,7 +62,10 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	}
 	if page > 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
-		element := action.Delegate.CreateObject()
+		element, err := action.Delegate.CreateObject(r)
+		if err != nil {
+			return &ActionError{Err: err, Status: http.StatusBadRequest}
+		}
 		if err = db.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
@@ -85,8 +91,8 @@ type DBGetAllDelegate interface {
 	ProvideDB() *gorm.DB
 
 	// CreateObject create the model object
-	CreateObject() interface{}
+	CreateObject(r *http.Request) (interface{}, error)
 
 	//CreateList create the model object list to be filled by the database interrogation
-	CreateList() interface{}
+	CreateList(r *http.Request) (interface{}, error)
 }
