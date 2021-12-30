@@ -18,8 +18,8 @@ type PKModel interface {
 // BaseDelegate implements the DBDelegate interfaces for a model implementig the PKModel interface
 type BaseDelegate struct {
 	DBProvider    func() *gorm.DB
-	ObjectCreator func() PKModel
-	ListCreator   func() interface{}
+	ObjectCreator func(r *http.Request) (PKModel, error)
+	ListCreator   func(r *http.Request) (interface{}, error)
 	PKExtractor   func(r *http.Request) (interface{}, error)
 	PKUrlPart     *string
 }
@@ -37,12 +37,12 @@ func (d BaseDelegate) AssignPK(element interface{}, pk interface{}) error {
 	return e.SetPK(pk)
 }
 
-func (d BaseDelegate) CreateObject() interface{} {
-	return d.ObjectCreator()
+func (d BaseDelegate) CreateObject(r *http.Request) (interface{}, error) {
+	return d.ObjectCreator(r)
 }
 
-func (d BaseDelegate) CreateList() interface{} {
-	return d.ListCreator()
+func (d BaseDelegate) CreateList(r *http.Request) (interface{}, error) {
+	return d.ListCreator(r)
 }
 
 func (d BaseDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
@@ -56,7 +56,7 @@ func (d BaseDelegate) PKUrl() string {
 	return "/{id}"
 }
 
-func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error), pkUrl *string) BaseDelegate {
+func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func(r *http.Request) (PKModel, error), listCreator func(r *http.Request) (interface{}, error), pkExtractor func(r *http.Request) (interface{}, error), pkUrl *string) BaseDelegate {
 	return BaseDelegate{
 		DBProvider:    dbProvider,
 		ObjectCreator: objectCreator,
@@ -66,6 +66,6 @@ func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func() P
 	}
 }
 
-func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func() PKModel, listCreator func() interface{}, pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
+func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func(r *http.Request) (PKModel, error), listCreator func(r *http.Request) (interface{}, error), pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
 	return NewBaseDelegateWithPKUrl(dbProvider, objectCreator, listCreator, pkExtractor, nil)
 }
