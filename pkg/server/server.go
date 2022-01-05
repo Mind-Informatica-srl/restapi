@@ -16,10 +16,30 @@ type RestApiServer struct {
 	jwtHandler         func(next http.Handler) http.Handler
 	authHandler        func(next http.Handler, authorizations []string) http.Handler
 	authUserContextKey interface{}
+	errorTranslator    func(string) string
 }
 
 // NewRestApiServer instantiate a new RestApiServer
-func NewRestApiServer(router *mux.Router, basePath string, jwtHandler func(next http.Handler) http.Handler, authHandler func(next http.Handler, authorizations []string) http.Handler, authUserContextKey interface{}) RestApiServer {
+//
+// router *mux.Router,
+//
+// basePath string,
+//
+// jwtHandler func(next http.Handler) http.Handler,
+//
+// authHandler func(next http.Handler, authorizations []string) http.Handler,
+//
+// authUserContextKey interface{},
+//
+// errorTranslator func(string) string: funzione per tradurre errori per il client
+func NewRestApiServer(
+	router *mux.Router,
+	basePath string,
+	jwtHandler func(next http.Handler) http.Handler,
+	authHandler func(next http.Handler, authorizations []string) http.Handler,
+	authUserContextKey interface{},
+	errorTranslator func(string) string,
+) RestApiServer {
 	router.Use(requestLoggingMiddleware(), requestCorsMiddleware())
 	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -27,18 +47,22 @@ func NewRestApiServer(router *mux.Router, basePath string, jwtHandler func(next 
 		w.Header().Set("Access-Control-Allow-Headers", "*")
 		w.WriteHeader(http.StatusOK)
 	})
+	if errorTranslator == nil {
+		errorTranslator = defaultErrorTranslator
+	}
 	return RestApiServer{
 		Router:             *router,
 		BasePath:           basePath,
 		jwtHandler:         jwtHandler,
 		authHandler:        authHandler,
 		authUserContextKey: authUserContextKey,
+		errorTranslator:    errorTranslator,
 	}
 }
 
 // RegisterAction register an handler to the relative path on the server
 func (s *RestApiServer) RegisterAction(basePath string, action actions.AbstractAction) *mux.Route {
-	var handler http.Handler = actionHandler(action)
+	var handler http.Handler = actionHandler(action, s.errorTranslator)
 	if !action.IsSkipAuth() {
 		handler = s.jwtHandler(s.authHandler(handler, action.GetAuthorizations()))
 	}
@@ -80,11 +104,18 @@ func requestCorsMiddleware() mux.MiddlewareFunc {
 	}
 }
 
-func actionHandler(action actions.AbstractAction) http.Handler {
+func actionHandler(
+	action actions.AbstractAction,
+	errTranslator func(string) string,
+) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := action.Serve(w, r); err != nil {
 			logger.Log().Error(err, "server error", "data error", err.Data)
-			http.Error(w, err.Error(), err.Status)
+			http.Error(w, errTranslator(err.Error()), err.Status)
 		}
 	})
+}
+
+func defaultErrorTranslator(value string) string {
+	return value
 }
