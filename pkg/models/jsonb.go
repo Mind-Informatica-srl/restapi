@@ -25,3 +25,13 @@ func (j *JSONB) Scan(value interface{}) error {
 func (JSONB) GormDataType() string {
 	return "jsonb"
 }
+
+// ToJSONB trasforma un'interface in un jsonb o restituisce un errore
+func ToJSONB(value interface{}) (obj JSONB, err error) {
+	var buf []byte
+	if buf, err = json.Marshal(value); err != nil {
+		return
+	}
+	err = json.Unmarshal(buf, &obj)
+	return
+}
