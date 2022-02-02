@@ -10,9 +10,9 @@ import (
 // PKModel expose functions needed to manage the primary key in a model
 type PKModel interface {
 	// SetPK set the pk for the model
-	SetPK(pk interface{}) error
+	SetPK(pk map[string]interface{}) error
 	// VerifyPK check the pk value
-	VerifyPK(pk interface{}) (bool, error)
+	VerifyPK(pk map[string]interface{}) (bool, error)
 }
 
 // BaseDelegate implements the DBDelegate interfaces for a model implementig the PKModel interface
@@ -32,7 +32,7 @@ func (d BaseDelegate) ProvideDB() *gorm.DB {
 	return d.DBProvider()
 }
 
-func (d BaseDelegate) AssignPK(element interface{}, pk interface{}) error {
+func (d BaseDelegate) AssignPK(element interface{}, pk map[string]interface{}) error {
 	e := element.(PKModel)
 	return e.SetPK(pk)
 }
@@ -45,7 +45,7 @@ func (d BaseDelegate) CreateList(r *http.Request) (interface{}, error) {
 	return d.ListCreator(r)
 }
 
-func (d BaseDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
+func (d BaseDelegate) VerifyPK(element interface{}, pk map[string]interface{}) (bool, error) {
 	return element.(PKModel).VerifyPK(pk)
 }
 

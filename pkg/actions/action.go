@@ -120,6 +120,11 @@ func PrimaryKeySingleStringExtractorMap(r *http.Request, idName string) (map[str
 //
 // intIdNames is the slice with the names of int pks and
 // stringIdNames is the slice with the names of string pks
+//
+// Example:
+// var multipleIdsExtractor = func(r *http.Request) (map[string]interface{}, error) {
+// 		return actions.PrimaryKeyFullExtractorMap(r, []string{"AziendaID"}, []string{"Cognome", "Nome"})
+// }
 func PrimaryKeyFullExtractorMap(r *http.Request, intIdNames []string, stringIdNames []string) (map[string]interface{}, error) {
 	res := make(map[string]interface{})
 	for _, idName := range intIdNames {
