@@ -35,7 +35,7 @@ func (action *DBDeleteAction) GetAuthorizations() []string {
 }
 
 func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	id, err := action.Delegate.ExtractPK(r)
+	idsMap, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
@@ -43,7 +43,7 @@ func (action *DBDeleteAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
-	if err := action.Delegate.AssignPK(element, id); err != nil {
+	if err := action.Delegate.AssignPK(element, idsMap); err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest, Data: element}
 	}
 	db := action.Delegate.ProvideDB()
@@ -68,11 +68,11 @@ type DBDeleteDelegate interface {
 	ProvideDB() *gorm.DB
 
 	// ExtractPK extract the model's primary key from the http request
-	ExtractPK(r *http.Request) (interface{}, error)
+	ExtractPK(r *http.Request) (map[string]interface{}, error)
 
 	// CreateObject create the model object
 	CreateObject(r *http.Request) (interface{}, error)
 
 	// AssignPK assign the primary key value to the model object properly
-	AssignPK(element interface{}, pk interface{}) error
+	AssignPK(element interface{}, pk map[string]interface{}) error
 }

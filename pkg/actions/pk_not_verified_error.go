@@ -9,7 +9,7 @@ type PKNotVerifiedError struct {
 	err     error
 }
 
-func NewPKNotVerifiedError(element interface{}, pk interface{}, err error) PKNotVerifiedError {
+func NewPKNotVerifiedError(element interface{}, pk map[string]interface{}, err error) PKNotVerifiedError {
 	return PKNotVerifiedError{
 		element: element,
 		pk:      pk,

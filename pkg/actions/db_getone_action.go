@@ -37,7 +37,7 @@ func (action *DBGetOneAction) GetAuthorizations() []string {
 }
 
 func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	id, err := action.Delegate.ExtractPK(r)
+	idsMap, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
@@ -54,7 +54,7 @@ func (action *DBGetOneAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		}
 	}
 	var rnf bool
-	if err := db.First(element, id).Error; errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := db.Where(idsMap).First(element).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 		rnf = true
 	} else if err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
@@ -77,5 +77,5 @@ type DBGetOneDelegate interface {
 	CreateObject(r *http.Request) (interface{}, error)
 
 	// ExtractPK extract the model's primary key from the http request
-	ExtractPK(r *http.Request) (interface{}, error)
+	ExtractPK(r *http.Request) (map[string]interface{}, error)
 }

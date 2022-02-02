@@ -20,11 +20,11 @@ type BaseDelegate struct {
 	DBProvider    func() *gorm.DB
 	ObjectCreator func(r *http.Request) (PKModel, error)
 	ListCreator   func(r *http.Request) (interface{}, error)
-	PKExtractor   func(r *http.Request) (interface{}, error)
+	PKExtractor   func(r *http.Request) (map[string]interface{}, error)
 	PKUrlPart     *string
 }
 
-func (d BaseDelegate) ExtractPK(r *http.Request) (interface{}, error) {
+func (d BaseDelegate) ExtractPK(r *http.Request) (map[string]interface{}, error) {
 	return d.PKExtractor(r)
 }
 
@@ -56,7 +56,7 @@ func (d BaseDelegate) PKUrl() string {
 	return "/{id}"
 }
 
-func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func(r *http.Request) (PKModel, error), listCreator func(r *http.Request) (interface{}, error), pkExtractor func(r *http.Request) (interface{}, error), pkUrl *string) BaseDelegate {
+func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func(r *http.Request) (PKModel, error), listCreator func(r *http.Request) (interface{}, error), pkExtractor func(r *http.Request) (map[string]interface{}, error), pkUrl *string) BaseDelegate {
 	return BaseDelegate{
 		DBProvider:    dbProvider,
 		ObjectCreator: objectCreator,
@@ -66,6 +66,6 @@ func NewBaseDelegateWithPKUrl(dbProvider func() *gorm.DB, objectCreator func(r *
 	}
 }
 
-func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func(r *http.Request) (PKModel, error), listCreator func(r *http.Request) (interface{}, error), pkExtractor func(r *http.Request) (interface{}, error)) BaseDelegate {
+func NewBaseDelegate(dbProvider func() *gorm.DB, objectCreator func(r *http.Request) (PKModel, error), listCreator func(r *http.Request) (interface{}, error), pkExtractor func(r *http.Request) (map[string]interface{}, error)) BaseDelegate {
 	return NewBaseDelegateWithPKUrl(dbProvider, objectCreator, listCreator, pkExtractor, nil)
 }

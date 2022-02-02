@@ -38,12 +38,14 @@ func (d SimpleObjectWithIdDelegate) CreateObject(r *http.Request) (interface{}, 
 	return &SimpleObjectWithId{}, nil
 }
 
-func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (interface{}, error) {
+func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (map[string]interface{}, error) {
 	vars := mux.Vars(r)
 	if pk, err := strconv.Atoi(vars["id"]); err != nil {
 		return nil, err
 	} else {
-		return pk, nil
+		res := make(map[string]interface{})
+		res["id"] = pk
+		return res, nil
 	}
 }
 
@@ -56,9 +58,9 @@ func (d SimpleObjectWithIdDelegate) VerifyPK(element interface{}, pk interface{}
 	return true, nil
 }
 
-func (d SimpleObjectWithIdDelegate) AssignPK(element interface{}, pk interface{}) error {
+func (d SimpleObjectWithIdDelegate) AssignPK(element interface{}, pk map[string]interface{}) error {
 	e := element.(*SimpleObjectWithId)
-	id := pk.(int)
+	id := pk["id"].(int)
 	e.ID = id
 	return nil
 }
