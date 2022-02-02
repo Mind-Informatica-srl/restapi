@@ -81,7 +81,7 @@ func PrimaryKeyIntExtractor(r *http.Request, idName string) (int, error) {
 
 var ErrorMissingIdName = fmt.Errorf("missing id name")
 
-// PrimaryKeyIntExtractor extract the string pkj from the request's vars
+// PrimaryKeyStringExtractor extract the string pkj from the request's vars
 func PrimaryKeyStringExtractor(r *http.Request, idName string) (string, error) {
 	vars := mux.Vars(r)
 	pk := vars[idName]
@@ -89,4 +89,52 @@ func PrimaryKeyStringExtractor(r *http.Request, idName string) (string, error) {
 		return "", ErrorMissingIdName
 	}
 	return pk, nil
+}
+
+// PrimaryKeySingleIntExtractorMap extract the unique int pk from the request's var and
+// put it inside of map[string]interface{}
+func PrimaryKeySingleIntExtractorMap(r *http.Request, idName string) (map[string]interface{}, error) {
+	res := make(map[string]interface{})
+	if value, err := PrimaryKeyIntExtractor(r, idName); err != nil {
+		return nil, err
+	} else {
+		res[idName] = value
+	}
+	return res, nil
+}
+
+// PrimaryKeySingleStringExtractorMap extract the unique string pk from the request's var and
+// put it inside of map[string]interface{}
+func PrimaryKeySingleStringExtractorMap(r *http.Request, idName string) (map[string]interface{}, error) {
+	res := make(map[string]interface{})
+	if value, err := PrimaryKeyStringExtractor(r, idName); err != nil {
+		return nil, err
+	} else {
+		res[idName] = value
+	}
+	return res, nil
+}
+
+// PrimaryKeyFullExtractorMap extract ALL the pk fields from the request's var and
+// put them inside of map[string]interface{}
+//
+// intIdNames is the slice with the names of int pks and
+// stringIdNames is the slice with the names of string pks
+func PrimaryKeyFullExtractorMap(r *http.Request, intIdNames []string, stringIdNames []string) (map[string]interface{}, error) {
+	res := make(map[string]interface{})
+	for _, idName := range intIdNames {
+		if value, err := PrimaryKeyIntExtractor(r, idName); err != nil {
+			return nil, err
+		} else {
+			res[idName] = value
+		}
+	}
+	for _, idName := range stringIdNames {
+		if value, err := PrimaryKeyStringExtractor(r, idName); err != nil {
+			return nil, err
+		} else {
+			res[idName] = value
+		}
+	}
+	return res, nil
 }
