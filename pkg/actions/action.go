@@ -93,7 +93,7 @@ func PrimaryKeyStringExtractor(r *http.Request, idName string) (string, error) {
 
 // PrimaryKeySingleIntExtractorMap extract the unique int pk from the request's var and
 // put it inside of map[string]interface{}
-func PrimaryKeySingleIntExtractorMap(r *http.Request, idName string) (map[string]interface{}, error) {
+func PrimaryKeySingleIntExtractorMap(r *http.Request, idName string) (interface{}, error) {
 	res := make(map[string]interface{})
 	if value, err := PrimaryKeyIntExtractor(r, idName); err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func PrimaryKeySingleIntExtractorMap(r *http.Request, idName string) (map[string
 
 // PrimaryKeySingleStringExtractorMap extract the unique string pk from the request's var and
 // put it inside of map[string]interface{}
-func PrimaryKeySingleStringExtractorMap(r *http.Request, idName string) (map[string]interface{}, error) {
+func PrimaryKeySingleStringExtractorMap(r *http.Request, idName string) (interface{}, error) {
 	res := make(map[string]interface{})
 	if value, err := PrimaryKeyStringExtractor(r, idName); err != nil {
 		return nil, err
@@ -122,10 +122,10 @@ func PrimaryKeySingleStringExtractorMap(r *http.Request, idName string) (map[str
 // stringIdNames is the slice with the names of string pks
 //
 // Example:
-// var multipleIdsExtractor = func(r *http.Request) (map[string]interface{}, error) {
+// var multipleIdsExtractor = func(r *http.Request) (interface{}, error) {
 // 		return actions.PrimaryKeyFullExtractorMap(r, []string{"AziendaID"}, []string{"Cognome", "Nome"})
 // }
-func PrimaryKeyFullExtractorMap(r *http.Request, intIdNames []string, stringIdNames []string) (map[string]interface{}, error) {
+func PrimaryKeyFullExtractorMap(r *http.Request, intIdNames []string, stringIdNames []string) (interface{}, error) {
 	res := make(map[string]interface{})
 	for _, idName := range intIdNames {
 		if value, err := PrimaryKeyIntExtractor(r, idName); err != nil {

@@ -37,7 +37,7 @@ func (action *DBUpdateAction) GetAuthorizations() []string {
 }
 
 func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
-	idsMap, err := action.Delegate.ExtractPK(r)
+	ids, err := action.Delegate.ExtractPK(r)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
@@ -52,8 +52,8 @@ func (action *DBUpdateAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err = json.Unmarshal(reqBody, element); err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
-	if ok, err := action.Delegate.VerifyPK(element, idsMap); !ok {
-		pke := NewPKNotVerifiedError(element, idsMap, err)
+	if ok, err := action.Delegate.VerifyPK(element, ids); !ok {
+		pke := NewPKNotVerifiedError(element, ids, err)
 		return &ActionError{Err: pke, Status: http.StatusBadRequest}
 	}
 	db := action.Delegate.ProvideDB()
@@ -86,8 +86,8 @@ type DBUpdateDelegate interface {
 	CreateObject(r *http.Request) (interface{}, error)
 
 	// VerifyPK check if the value of the primary key in the model object is equal to the passed primary key value
-	VerifyPK(element interface{}, pk map[string]interface{}) (bool, error)
+	VerifyPK(element interface{}, pk interface{}) (bool, error)
 
 	// ExtractPK extract the model's primary key from the http request
-	ExtractPK(r *http.Request) (map[string]interface{}, error)
+	ExtractPK(r *http.Request) (interface{}, error)
 }

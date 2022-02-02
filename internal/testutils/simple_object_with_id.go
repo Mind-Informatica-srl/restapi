@@ -16,14 +16,14 @@ type SimpleObjectWithId struct {
 }
 
 // SetPK set the pk for the model
-func (o *SimpleObjectWithId) SetPK(pk map[string]interface{}) error {
-	o.ID = pk["id"].(int)
+func (o *SimpleObjectWithId) SetPK(pk interface{}) error {
+	o.ID = pk.(int)
 	return nil
 }
 
 // VerifyPK check the pk value
-func (o *SimpleObjectWithId) VerifyPK(pk map[string]interface{}) (bool, error) {
-	return o.ID == pk["id"].(int), nil
+func (o *SimpleObjectWithId) VerifyPK(pk interface{}) (bool, error) {
+	return o.ID == pk.(int), nil
 }
 
 type SimpleObjectWithIdDelegate struct {
@@ -38,29 +38,27 @@ func (d SimpleObjectWithIdDelegate) CreateObject(r *http.Request) (interface{}, 
 	return &SimpleObjectWithId{}, nil
 }
 
-func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (map[string]interface{}, error) {
+func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (interface{}, error) {
 	vars := mux.Vars(r)
 	if pk, err := strconv.Atoi(vars["id"]); err != nil {
 		return nil, err
 	} else {
-		res := make(map[string]interface{})
-		res["id"] = pk
-		return res, nil
+		return pk, nil
 	}
 }
 
-func (d SimpleObjectWithIdDelegate) VerifyPK(element interface{}, pk map[string]interface{}) (bool, error) {
+func (d SimpleObjectWithIdDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
 	e := element.(*SimpleObjectWithId)
-	id := pk["id"].(int)
+	id := pk.(int)
 	if e.ID != id {
 		return false, nil
 	}
 	return true, nil
 }
 
-func (d SimpleObjectWithIdDelegate) AssignPK(element interface{}, pk map[string]interface{}) error {
+func (d SimpleObjectWithIdDelegate) AssignPK(element interface{}, pk interface{}) error {
 	e := element.(*SimpleObjectWithId)
-	id := pk["id"].(int)
+	id := pk.(int)
 	e.ID = id
 	return nil
 }

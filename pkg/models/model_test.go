@@ -8,17 +8,16 @@ import (
 
 func TestPkModel(t *testing.T) {
 	var obj testutils.SimpleObjectWithId
-	m := make(map[string]interface{})
-	m["id"] = 1
-	if err := obj.SetPK(m); err != nil {
+	id := 1
+	if err := obj.SetPK(id); err != nil {
 		t.Error(err)
 		t.Fail()
 	}
-	if obj.ID != m["id"] {
+	if obj.ID != id {
 		t.Log("obj ID should be equal to id value")
 		t.Fail()
 	}
-	if ok, err := obj.VerifyPK(m); err != nil {
+	if ok, err := obj.VerifyPK(id); err != nil {
 		t.Log(err)
 		t.Fail()
 	} else if !ok {
