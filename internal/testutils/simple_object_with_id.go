@@ -16,14 +16,14 @@ type SimpleObjectWithId struct {
 }
 
 // SetPK set the pk for the model
-func (o *SimpleObjectWithId) SetPK(pk interface{}) error {
-	o.ID = pk.(int)
+func (o *SimpleObjectWithId) SetPK(pk map[string]interface{}) error {
+	o.ID = pk["id"].(int)
 	return nil
 }
 
 // VerifyPK check the pk value
-func (o *SimpleObjectWithId) VerifyPK(pk interface{}) (bool, error) {
-	return o.ID == pk.(int), nil
+func (o *SimpleObjectWithId) VerifyPK(pk map[string]interface{}) (bool, error) {
+	return o.ID == pk["id"].(int), nil
 }
 
 type SimpleObjectWithIdDelegate struct {
@@ -49,9 +49,9 @@ func (d SimpleObjectWithIdDelegate) ExtractPK(r *http.Request) (map[string]inter
 	}
 }
 
-func (d SimpleObjectWithIdDelegate) VerifyPK(element interface{}, pk interface{}) (bool, error) {
+func (d SimpleObjectWithIdDelegate) VerifyPK(element interface{}, pk map[string]interface{}) (bool, error) {
 	e := element.(*SimpleObjectWithId)
-	id := pk.(int)
+	id := pk["id"].(int)
 	if e.ID != id {
 		return false, nil
 	}
