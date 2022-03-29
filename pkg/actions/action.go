@@ -35,7 +35,7 @@ func (action *Action) GetMethod() string {
 	return action.Method
 }
 
-func (action *Action) GetAuthorizations() []string {
+func (action Action) GetAuthorizations() []string {
 	return action.Authorizations
 }
 
