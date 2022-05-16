@@ -38,7 +38,7 @@ func Paginate(r *http.Request) (paginateScope func(db *gorm.DB) *gorm.DB, page i
 	}
 	paginateScope = func(db *gorm.DB) *gorm.DB {
 		if page >= 0 && pageSize > 0 {
-			offset := (page - 1) * pageSize
+			offset := (page) * pageSize
 			return db.Offset(offset).Limit(pageSize)
 		}
 		return db
