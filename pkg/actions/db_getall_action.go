@@ -60,7 +60,7 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err := db.Scopes(orderScope, paginationScope).Find(list).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
-	if page > 0 && pageSize > 0 {
+	if page >= 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
 		element, err := action.Delegate.CreateObject(r)
 		if err != nil {
