@@ -38,14 +38,20 @@ func (action *DBGetAllAction) GetAuthorizations() []string {
 
 func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *ActionError {
 	db := action.Delegate.ProvideDB()
+	dbCount := action.Delegate.ProvideDB()
 	if action.ScopeDB != nil {
 		if scope, err := action.ScopeDB(r); err != nil {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		} else {
 			db = db.Scopes(scope)
+			dbCount = dbCount.Scopes(scope)
 		}
 	}
 	db, err := QueryFilter(db, r.URL)
+	if err != nil {
+		return &ActionError{Err: err, Status: http.StatusBadRequest}
+	}
+	dbCount, err = QueryFilter(dbCount, r.URL)
 	if err != nil {
 		return &ActionError{Err: err, Status: http.StatusBadRequest}
 	}
@@ -57,8 +63,7 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	orderScope, _, _ := Ordinate(r)
 	var count int64
 	//se è richiesta la paginazione
-	dbList := db
-	if err := dbList.Scopes(orderScope, paginationScope).Find(list).Error; err != nil {
+	if err := db.Scopes(orderScope, paginationScope).Find(list).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	if page >= 0 && pageSize > 0 {
@@ -67,7 +72,7 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		if err != nil {
 			return &ActionError{Err: err, Status: http.StatusBadRequest}
 		}
-		if err = db.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		if err = dbCount.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
 		res := Pager{
