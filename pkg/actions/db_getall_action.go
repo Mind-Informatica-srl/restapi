@@ -66,7 +66,8 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		if err != nil {
 			return &ActionError{Err: err, Status: http.StatusBadRequest}
 		}
-		if err = db.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		dbCount := action.Delegate.ProvideDB()
+		if err = dbCount.Model(element).Count(&count).Error; err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
 		res := Pager{
