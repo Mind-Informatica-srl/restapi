@@ -14,6 +14,7 @@ type DBGetAllAction struct {
 	SkipAuth       bool
 	Authorizations []string
 	ScopeDB        func(r *http.Request) (func(*gorm.DB) *gorm.DB, error)
+	CustomizeList  func(interface{}) (interface{}, error)
 	Delegate       DBGetAllDelegate
 }
 
@@ -66,6 +67,11 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 	if err := db.Scopes(orderScope, paginationScope).Find(list).Error; err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
+	if action.CustomizeList != nil {
+		if list, err = action.CustomizeList(list); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		}
+	}
 	if page >= 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
 		element, err := action.Delegate.CreateObject(r)
@@ -99,6 +105,6 @@ type DBGetAllDelegate interface {
 	// CreateObject create the model object
 	CreateObject(r *http.Request) (interface{}, error)
 
-	//CreateList create the model object list to be filled by the database interrogation
+	// CreateList create the model object list to be filled by the database interrogation
 	CreateList(r *http.Request) (interface{}, error)
 }
