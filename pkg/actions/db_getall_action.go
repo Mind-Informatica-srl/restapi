@@ -14,7 +14,7 @@ type DBGetAllAction struct {
 	SkipAuth       bool
 	Authorizations []string
 	ScopeDB        func(r *http.Request) (func(*gorm.DB) *gorm.DB, error)
-	CustomizeList  func(interface{}) (interface{}, error)
+	CustomizeList  func(*http.Request, interface{}) (interface{}, error)
 	Delegate       DBGetAllDelegate
 }
 
@@ -68,7 +68,7 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
 	if action.CustomizeList != nil {
-		if list, err = action.CustomizeList(list); err != nil {
+		if list, err = action.CustomizeList(r, list); err != nil {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
 	}
