@@ -3,8 +3,10 @@ package actions
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/gocarina/gocsv"
 	"gorm.io/gorm"
 )
 
@@ -72,6 +74,7 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
 	}
+	accept := r.Header["Accept"]
 	if page >= 0 && pageSize > 0 {
 		// abbiamo la paginazione. Si calcola anche la count
 		element, err := action.Delegate.CreateObject(r)
@@ -90,6 +93,16 @@ func (action *DBGetAllAction) Serve(w http.ResponseWriter, r *http.Request) *Act
 		if err := json.NewEncoder(w).Encode(res); err != nil {
 			return &ActionError{Err: err, Status: http.StatusInternalServerError}
 		}
+	} else if len(accept) == 1 && accept[0] == "text/csv" {
+		if err := gocsv.Marshal(list, w); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		}
+		fileName := "export.csv"
+		if fileName, err = action.Delegate.CSVFileName(r); err != nil {
+			return &ActionError{Err: err, Status: http.StatusInternalServerError}
+		}
+		w.Header().Add("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
+
 	} else if err := json.NewEncoder(w).Encode(list); err != nil {
 		return &ActionError{Err: err, Status: http.StatusInternalServerError}
 	}
@@ -107,4 +120,7 @@ type DBGetAllDelegate interface {
 
 	// CreateList create the model object list to be filled by the database interrogation
 	CreateList(r *http.Request) (interface{}, error)
+
+	// Return the csv file name
+	CSVFileName(r *http.Request) (string, error)
 }

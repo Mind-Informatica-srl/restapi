@@ -28,6 +28,10 @@ func (d SimpleObjectDelegate) CreateList(r *http.Request) (interface{}, error) {
 	return &[]SimpleObject{}, nil
 }
 
+func (d SimpleObjectDelegate) CSVFileName(r *http.Request) (string, error) {
+	return "export.csv", nil
+}
+
 func SomeSimpleObject() ([]byte, error) {
 	return ioutil.ReadFile("../../internal/testutils/testdata/simple_object.json")
 }
