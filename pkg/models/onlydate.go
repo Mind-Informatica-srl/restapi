@@ -37,6 +37,10 @@ func (j OnlyDate) MarshalJSON() ([]byte, error) {
 
 }
 
+func (j *OnlyDate) MarshalCSV() (string, error) {
+	return time.Time(*j).Format("01/02/2006"), nil
+}
+
 // Maybe a Format function for printing your date
 func (j OnlyDate) Format(s string) string {
 	t := time.Time(j)
