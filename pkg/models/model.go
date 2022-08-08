@@ -21,7 +21,6 @@ type BaseDelegate struct {
 	ObjectCreator func(r *http.Request) (PKModel, error)
 	ListCreator   func(r *http.Request) (interface{}, error)
 	PKExtractor   func(r *http.Request) (interface{}, error)
-	CSVNamer      func(r *http.Request) (string, error)
 	PKUrlPart     *string
 }
 
@@ -57,17 +56,12 @@ func (d BaseDelegate) PKUrl() string {
 	return "/{id}"
 }
 
-func (d BaseDelegate) CSVFileName(r *http.Request) (string, error) {
-	return d.CSVNamer(r)
-}
-
 func NewBaseDelegateWithPKUrl(
 	dbProvider func() *gorm.DB,
 	objectCreator func(r *http.Request) (PKModel, error),
 	listCreator func(r *http.Request) (interface{}, error),
 	pkExtractor func(r *http.Request) (interface{}, error),
 	pkUrl *string,
-	csvNamer func(r *http.Request) (string, error),
 ) BaseDelegate {
 	return BaseDelegate{
 		DBProvider:    dbProvider,
@@ -75,7 +69,6 @@ func NewBaseDelegateWithPKUrl(
 		ListCreator:   listCreator,
 		PKExtractor:   pkExtractor,
 		PKUrlPart:     pkUrl,
-		CSVNamer:      csvNamer,
 	}
 }
 
@@ -84,7 +77,6 @@ func NewBaseDelegate(
 	objectCreator func(r *http.Request) (PKModel, error),
 	listCreator func(r *http.Request) (interface{}, error),
 	pkExtractor func(r *http.Request) (interface{}, error),
-	csvNamer func(r *http.Request) (string, error),
 ) BaseDelegate {
 	return NewBaseDelegateWithPKUrl(
 		dbProvider,
@@ -92,6 +84,5 @@ func NewBaseDelegate(
 		listCreator,
 		pkExtractor,
 		nil,
-		csvNamer,
 	)
 }
