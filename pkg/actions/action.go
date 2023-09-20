@@ -79,6 +79,18 @@ func PrimaryKeyIntExtractor(r *http.Request, idName string) (int, error) {
 	return pk, nil
 }
 
+/**
+ * Da usare quando si dichiara la model con gorm.Model che usa il campo ID di tipo uint
+ */
+func PrimaryKeyUintExtractor(r *http.Request, idName string) (uint, error) {
+	vars := mux.Vars(r)
+	pk, err := strconv.ParseUint(vars[idName], 0, 32)
+	if err != nil {
+		return 0, err
+	}
+	return uint(pk), nil
+}
+
 var ErrorMissingIdName = fmt.Errorf("missing id name")
 
 // PrimaryKeyStringExtractor extract the string pkj from the request's vars
@@ -122,9 +134,10 @@ func PrimaryKeySingleStringExtractorMap(r *http.Request, idName string) (interfa
 // stringIdNames is the slice with the names of string pks
 //
 // Example:
-// var multipleIdsExtractor = func(r *http.Request) (interface{}, error) {
-// 		return actions.PrimaryKeyFullExtractorMap(r, []string{"AziendaID"}, []string{"Cognome", "Nome"})
-// }
+//
+//	var multipleIdsExtractor = func(r *http.Request) (interface{}, error) {
+//			return actions.PrimaryKeyFullExtractorMap(r, []string{"AziendaID"}, []string{"Cognome", "Nome"})
+//	}
 func PrimaryKeyFullExtractorMap(r *http.Request, intIdNames []string, stringIdNames []string) (interface{}, error) {
 	res := make(map[string]interface{})
 	for _, idName := range intIdNames {
