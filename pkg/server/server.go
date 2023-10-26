@@ -17,6 +17,8 @@ type RestApiServer struct {
 	authHandler        func(next http.Handler, authorizations []string) http.Handler
 	authUserContextKey interface{}
 	errorTranslator    func(string) string
+	beforeRequest      func(req *http.Request) error
+	afterRequest       func(req *http.Request) error
 }
 
 // NewRestApiServer instantiate a new RestApiServer
@@ -39,6 +41,8 @@ func NewRestApiServer(
 	authHandler func(next http.Handler, authorizations []string) http.Handler,
 	authUserContextKey interface{},
 	errorTranslator func(string) string,
+	beforeRequest func(req *http.Request) error,
+	afterRequest func(req *http.Request) error,
 ) RestApiServer {
 	router.Use(requestLoggingMiddleware(), requestCorsMiddleware())
 	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -57,12 +61,14 @@ func NewRestApiServer(
 		authHandler:        authHandler,
 		authUserContextKey: authUserContextKey,
 		errorTranslator:    errorTranslator,
+		afterRequest:       afterRequest,
+		beforeRequest:      beforeRequest,
 	}
 }
 
 // RegisterAction register an handler to the relative path on the server
 func (s *RestApiServer) RegisterAction(basePath string, action actions.AbstractAction) *mux.Route {
-	var handler http.Handler = actionHandler(action, s.errorTranslator)
+	var handler http.Handler = actionHandler(action, s.errorTranslator, s.beforeRequest, s.afterRequest)
 	if !action.IsSkipAuth() {
 		handler = s.jwtHandler(s.authHandler(handler, action.GetAuthorizations()))
 	}
@@ -106,11 +112,23 @@ func requestCorsMiddleware() mux.MiddlewareFunc {
 func actionHandler(
 	action actions.AbstractAction,
 	errTranslator func(string) string,
+	beforeRequest func(req *http.Request) error,
+	afterRequest func(req *http.Request) error,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if beforeRequest != nil {
+			if err := beforeRequest(r); err != nil {
+				http.Error(w, errTranslator(err.Error()), http.StatusInternalServerError)
+			}
+		}
 		if err := action.Serve(w, r); err != nil {
 			logger.Log().Error(err, "server error", "data error", err.Data)
 			http.Error(w, errTranslator(err.Error()), err.Status)
+		}
+		if afterRequest != nil {
+			if err := afterRequest(r); err != nil {
+				http.Error(w, errTranslator(err.Error()), http.StatusInternalServerError)
+			}
 		}
 	})
 }
