@@ -37,12 +37,16 @@ func Paginate(r *http.Request) (paginateScope func(db *gorm.DB) *gorm.DB, page i
 		page, _ = strconv.Atoi(pageString)
 		page--
 	}
-	paginateScope = func(db *gorm.DB) *gorm.DB {
+	paginateScope = PaginateScope(page, pageSize)
+	return
+}
+
+func PaginateScope(page int, pageSize int) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
 		if page >= 0 && pageSize > 0 {
 			offset := (page) * pageSize
 			return db.Offset(offset).Limit(pageSize)
 		}
 		return db
 	}
-	return
 }
