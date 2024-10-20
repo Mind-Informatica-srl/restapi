@@ -51,7 +51,6 @@ func ExtractPage(r *http.Request) (page int, pageSize int) {
 	if pageString != "" && pageSizeString != "" {
 		pageSize, _ = strconv.Atoi(pageSizeString)
 		page, _ = strconv.Atoi(pageString)
-		page--
 	}
 	return
 }
