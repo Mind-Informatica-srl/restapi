@@ -17,7 +17,7 @@ type RestApiServer struct {
 	authHandler        func(next http.Handler, authorizations []string) http.Handler
 	authUserContextKey interface{}
 	errorTranslator    func(string) string
-	beforeRequest      func(req *http.Request) error
+	beforeRequest      func(next http.Handler) http.Handler
 	afterRequest       func(req *http.Request) error
 }
 
@@ -41,7 +41,7 @@ func NewRestApiServer(
 	authHandler func(next http.Handler, authorizations []string) http.Handler,
 	authUserContextKey interface{},
 	errorTranslator func(string) string,
-	beforeRequest func(req *http.Request) error,
+	beforeRequest func(next http.Handler) http.Handler,
 	afterRequest func(req *http.Request) error,
 ) RestApiServer {
 	router.Use(requestLoggingMiddleware(), requestCorsMiddleware())
@@ -68,9 +68,12 @@ func NewRestApiServer(
 
 // RegisterAction register an handler to the relative path on the server
 func (s *RestApiServer) RegisterAction(basePath string, action actions.AbstractAction) *mux.Route {
-	var handler http.Handler = actionHandler(action, s.errorTranslator, s.beforeRequest, s.afterRequest)
+	var handler http.Handler = actionHandler(action, s.errorTranslator, s.afterRequest)
 	if !action.IsSkipAuth() {
 		handler = s.jwtHandler(s.authHandler(handler, action.GetAuthorizations()))
+	}
+	if s.beforeRequest != nil {
+		handler = s.beforeRequest(handler)
 	}
 	return s.Handle(s.BasePath+basePath+action.GetPath(), handler).Methods(action.GetMethod())
 }
@@ -112,15 +115,9 @@ func requestCorsMiddleware() mux.MiddlewareFunc {
 func actionHandler(
 	action actions.AbstractAction,
 	errTranslator func(string) string,
-	beforeRequest func(req *http.Request) error,
 	afterRequest func(req *http.Request) error,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if beforeRequest != nil {
-			if err := beforeRequest(r); err != nil {
-				http.Error(w, errTranslator(err.Error()), http.StatusInternalServerError)
-			}
-		}
 		if err := action.Serve(w, r); err != nil {
 			logger.Log().Error(err, "server error", "data error", err.Data)
 			http.Error(w, errTranslator(err.Error()), err.Status)
