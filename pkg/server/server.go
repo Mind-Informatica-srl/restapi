@@ -127,7 +127,13 @@ func actionHandler(
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := action.Serve(w, r); err != nil {
-			logger.Log().Error(err, "server error", "data error", err.Data)
+			for {
+				if actionErr, ok := err.Err.(*actions.ActionError); ok {
+					err = actionErr
+				} else {
+					break
+				}
+			}
 			http.Error(w, errTranslator(err.Error()), err.Status)
 		}
 		if afterRequest != nil {
