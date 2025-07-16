@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Mind-Informatica-srl/restapi/pkg/actions"
@@ -46,6 +47,7 @@ func NewRestApiServer(
 ) RestApiServer {
 	router.Use(requestLoggingMiddleware(), requestCorsMiddleware())
 	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("CORS preflight request received")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "*")
