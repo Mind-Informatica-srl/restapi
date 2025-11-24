@@ -2,34 +2,33 @@
 package logger
 
 import (
-	"fmt"
-
-	"github.com/go-logr/logr"
-	"github.com/go-logr/zapr"
-	"go.uber.org/zap"
+	"log/slog"
+	"os"
 )
 
-var log logr.Logger
-var zlog *zap.Logger
+type leveler struct {
+	production bool
+}
+
+func (l leveler) Level() slog.Level {
+	if l.production {
+		return slog.LevelInfo
+	}
+	return slog.LevelDebug
+}
+
+var logger *slog.Logger
 
 // Setup initialize the logging infrastructure using production mode if needed
 func Setup(production bool) {
-	var err error
-
-	if production {
-		zlog, err = zap.NewProduction()
-	} else {
-		zlog, err = zap.NewDevelopment()
+	leveler := leveler{production: production}
+	opts := &slog.HandlerOptions{
+		Level: leveler,
 	}
-
-	if err != nil {
-		panic(fmt.Sprintf("who watches the watchmen (%v)?", err))
-	}
-
-	log = zapr.NewLogger(zlog)
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, opts))
 }
 
 // Log returns the root logger
-func Log() logr.Logger {
-	return log
+func Log() *slog.Logger {
+	return logger
 }
