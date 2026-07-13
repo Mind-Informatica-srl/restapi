@@ -1,14 +1,24 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Mind-Informatica-srl/restapi/pkg/actions"
 	"github.com/Mind-Informatica-srl/restapi/pkg/controllers"
 	"github.com/Mind-Informatica-srl/restapi/pkg/logger"
 	"github.com/gorilla/mux"
 )
+
+// shutdownTimeout è il tempo massimo concesso alle richieste in corso per
+// completarsi dopo la ricezione di SIGTERM/SIGINT, prima di forzare la chiusura.
+// Deve restare sotto il terminationGracePeriodSeconds del pod Kubernetes.
+const shutdownTimeout = 25 * time.Second
 
 // RestApiServer represent a server and provid usefull functions to configure it
 type RestApiServer struct {
@@ -89,10 +99,44 @@ func (s *RestApiServer) RegisterController(controller *controllers.Controller) [
 	return routes
 }
 
-// Serve start the server
+// Serve start the server and blocks until it stops.
+//
+// On SIGTERM/SIGINT (the signal sent by Kubernetes when terminating a pod)
+// it stops accepting new connections and waits up to shutdownTimeout for
+// in-flight requests to complete before returning, so the process can exit
+// cleanly (exit code 0) instead of being killed mid-request.
 func (s RestApiServer) Serve(listenAddresses string) error {
 	logger.Log().Info("Starting web server", "listenAddresses", listenAddresses)
-	return http.ListenAndServe(listenAddresses, &s)
+
+	httpServer := &http.Server{
+		Addr:    listenAddresses,
+		Handler: &s,
+	}
+
+	serveErr := make(chan error, 1)
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			serveErr <- err
+		}
+		close(serveErr)
+	}()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+	defer signal.Stop(sigCh)
+
+	select {
+	case err := <-serveErr:
+		return err
+	case sig := <-sigCh:
+		logger.Log().Info("shutdown signal received, draining connections", "signal", sig.String())
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+		defer cancel()
+		if err := httpServer.Shutdown(ctx); err != nil {
+			return err
+		}
+		return <-serveErr
+	}
 }
 
 // RequestLoggingMiddleware is a middleware logging each request arrive to web server
