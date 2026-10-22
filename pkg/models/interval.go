@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 
 	"github.com/jackc/pgtype"
 )
@@ -32,7 +31,6 @@ func (i *PGInterval) UnmarshalJSON(b []byte) error {
 	if err := i.ConvertToPGInterval(val); err != nil {
 		return err
 	}
-	fmt.Println(i)
 	return nil
 }
 
@@ -48,7 +46,6 @@ func (j PGInterval) MarshalJSON() ([]byte, error) {
 // Scan implements the database/sql Scanner interface.
 func (dst *PGInterval) Scan(src interface{}) error {
 	interval := pgtype.Interval(*dst)
-	fmt.Println(interval)
 	if err := interval.Scan(src); err != nil {
 		return err
 	}
@@ -59,7 +56,6 @@ func (dst *PGInterval) Scan(src interface{}) error {
 // Value implements the database/sql/driver Valuer interface.
 func (src PGInterval) Value() (driver.Value, error) {
 	tmp, err := pgtype.Interval(src).Value()
-	fmt.Println(tmp)
 	return tmp, err
 }
 

@@ -23,7 +23,6 @@ func (j *OnlyTime) UnmarshalJSON(b []byte) error {
 	}
 	*j = OnlyTime(t)
 
-	fmt.Println(t)
 	return nil
 }
 

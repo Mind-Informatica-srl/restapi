@@ -62,7 +62,6 @@ func QueryFilter(db *gorm.DB, url *url.URL) (*gorm.DB, error) {
 				p := strings.Split(criteria[0], ".")
 				valore := criteria[1]
 				condition, values, err := prepareSubQuery(p, valore)
-				print(condition)
 				if err != nil {
 					return nil, err
 				}
