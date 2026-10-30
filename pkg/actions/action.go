@@ -61,7 +61,16 @@ type ActionError struct {
 	Data   interface{}
 }
 
+// Error returns the message of the wrapped error. If there is no wrapped error
+// (Err is nil or a nil *ActionError) it falls back to the status text, so that
+// it never panics
 func (e ActionError) Error() string {
+	if inner, ok := e.Err.(*ActionError); e.Err == nil || (ok && inner == nil) {
+		if text := http.StatusText(e.Status); text != "" {
+			return text
+		}
+		return http.StatusText(http.StatusInternalServerError)
+	}
 	return e.Err.Error()
 }
 

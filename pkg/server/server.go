@@ -1,10 +1,16 @@
 package server
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"io"
+	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -170,22 +176,107 @@ func actionHandler(
 	afterRequest func(req *http.Request) error,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := action.Serve(w, r); err != nil {
-			for {
-				if actionErr, ok := err.Err.(*actions.ActionError); ok {
-					err = actionErr
-				} else {
-					break
+		tw := &trackingResponseWriter{ResponseWriter: w}
+		// The action runs in a closure so that a panic is recovered here and
+		// afterRequest is executed anyway. Without the recover net/http would
+		// catch the panic and close the connection with no response at all,
+		// so the only observable change is that the client gets a 500
+		// instead of a network error
+		func() {
+			defer func() {
+				if v := recover(); v != nil {
+					if v == http.ErrAbortHandler {
+						// intentional abort: let net/http handle it
+						panic(v)
+					}
+					log := logger.Log()
+					if log == nil {
+						log = slog.Default()
+					}
+					log.Error("panic in action handler",
+						"panic", fmt.Sprint(v),
+						"method", r.Method,
+						"path", r.URL.Path,
+						"stack", string(debug.Stack()),
+					)
+					if !tw.wroteHeader {
+						http.Error(tw, errTranslator(http.StatusText(http.StatusInternalServerError)), http.StatusInternalServerError)
+					}
 				}
+			}()
+			if err := action.Serve(tw, r); err != nil {
+				// use the innermost ActionError, stopping at a nil one
+				for {
+					if actionErr, ok := err.Err.(*actions.ActionError); ok && actionErr != nil {
+						err = actionErr
+					} else {
+						break
+					}
+				}
+				status := err.Status
+				if status < 100 || status > 999 {
+					status = http.StatusInternalServerError
+				}
+				http.Error(tw, errTranslator(err.Error()), status)
 			}
-			http.Error(w, errTranslator(err.Error()), err.Status)
-		}
+		}()
 		if afterRequest != nil {
 			if err := afterRequest(r); err != nil {
 				http.Error(w, errTranslator(err.Error()), http.StatusInternalServerError)
 			}
 		}
 	})
+}
+
+// trackingResponseWriter records whether the response headers have already
+// been sent, so that after a panic an error is written only if it is still
+// possible
+type trackingResponseWriter struct {
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func (w *trackingResponseWriter) WriteHeader(code int) {
+	// informational headers (1xx except 101) don't commit the response
+	if code < 100 || code > 199 || code == http.StatusSwitchingProtocols {
+		w.wroteHeader = true
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *trackingResponseWriter) Write(b []byte) (int, error) {
+	w.wroteHeader = true
+	return w.ResponseWriter.Write(b)
+}
+
+// ReadFrom keeps the io.ReaderFrom optimization (sendfile) of the underlying writer
+func (w *trackingResponseWriter) ReadFrom(src io.Reader) (int64, error) {
+	w.wroteHeader = true
+	if rf, ok := w.ResponseWriter.(io.ReaderFrom); ok {
+		return rf.ReadFrom(src)
+	}
+	return io.Copy(struct{ io.Writer }{w.ResponseWriter}, src)
+}
+
+func (w *trackingResponseWriter) Flush() {
+	w.wroteHeader = true
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Hijack is kept for callers that type-assert http.Hijacker instead of using http.ResponseController
+func (w *trackingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	conn, rw, err := http.NewResponseController(w.ResponseWriter).Hijack()
+	if err == nil {
+		w.wroteHeader = true
+	}
+	return conn, rw, err
+}
+
+// Unwrap allows http.ResponseController to reach the underlying writer
+func (w *trackingResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
 func defaultErrorTranslator(value string) string {
